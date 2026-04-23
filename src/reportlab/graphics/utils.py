@@ -7,6 +7,7 @@ __all__ = (
         'RenderPMError',
         )
 from reportlab.pdfbase.pdfmetrics import getFont, unicode2T1, stringWidth
+from reportlab.lib.rl_accel import unicode2TT as _unicode2TT
 from reportlab.pdfbase.ttfonts import ShapedStr
 from reportlab.lib.utils import open_and_read, isBytes, rl_exec
 from .shapes import _baseGFontName, _PATH_OP_ARG_COUNT, _PATH_OP_NAMES, definePath
@@ -175,7 +176,12 @@ def __makeTextPathsCode__(tp=None, _TP = ('freetype','_renderPM')):
                 if gs is None:
                     gs = FTTextPath()
                 if font._dynamicFont:
-                    P_extend(gs._text2Path(text,x=x,y=y,fontName=fontName,fontSize=fontSize, truncate=truncate,pathReverse=pathReverse))
+                    if font.substitutionFonts:
+                        for fbFont, fbText in _unicode2TT(text, [font]+font.substitutionFonts):
+                            P_extend(gs._text2Path(fbText,x=x,y=y,fontName=fbFont.fontName,fontSize=fontSize, truncate=truncate,pathReverse=pathReverse))
+                            x += fbFont.stringWidth(fbText, fontSize)
+                    else:
+                        P_extend(gs._text2Path(text,x=x,y=y,fontName=fontName,fontSize=fontSize, truncate=truncate,pathReverse=pathReverse))
                 else:
                     if isBytes(text):
                         try:
@@ -248,8 +254,16 @@ def __makeTextPathsCode__(tp=None, _TP = ('freetype','_renderPM')):
                     gs = gstate(1,1)
                 setFont(gs,fontName,fontSize)
                 if font._dynamicFont:
-                    for g in gs._stringPath(text,x,y):
-                        P_extend(processGlyph(g,truncate=truncate,pathReverse=pathReverse))
+                    if font.substitutionFonts:
+                        for fbFont, fbText in _unicode2TT(text, [font]+font.substitutionFonts):
+                            setFont(gs, fbFont.fontName, fontSize)
+                            for g in gs._stringPath(fbText,x,y):
+                                P_extend(processGlyph(g,truncate=truncate,pathReverse=pathReverse))
+                            x += fbFont.stringWidth(fbText, fontSize)
+                        setFont(gs, fontName, fontSize)
+                    else:
+                        for g in gs._stringPath(text,x,y):
+                            P_extend(processGlyph(g,truncate=truncate,pathReverse=pathReverse))
                 else:
                     if isBytes(text):
                         try:

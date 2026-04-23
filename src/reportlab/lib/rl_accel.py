@@ -6,6 +6,7 @@ _py_funcs = {}
 __all__ = list(filter(None,'''
         fp_str
         unicode2T1
+        unicode2TT
         instanceStringWidthT1
         instanceStringWidthTTF
         asciiBase85Encode
@@ -66,6 +67,7 @@ if 'fp_str' in _py_funcs:
         def __py_fp_str(*a):
             return _FP_STR(*a).replace(',','.')
     _py_funcs['fp_str'] = _py_fp_str
+    fp_str = _py_fp_str
 
 if 'unicode2T1' in _py_funcs:
     def _py_unicode2T1(utext,fonts):
@@ -94,6 +96,44 @@ if 'unicode2T1' in _py_funcs:
                 utext = utext[il:]
         return R
     _py_funcs['unicode2T1'] = _py_unicode2T1
+    unicode2T1 = _py_unicode2T1
+
+if 'unicode2TT' in _py_funcs:
+    def _py_unicode2TT(utext, fonts):
+        '''return a list of (TTFont,str) pairs representing the unicode text,
+        split by glyph availability across the font list'''
+        if not utext:
+            return []
+        # Pre-build (font, charToGlyph) list for fast lookup
+        fontC2G = [(f, f.face.charToGlyph) for f in fonts]
+        mainFont = fonts[0]
+        R = []
+        curFont = None
+        curChars = []
+        for ch in utext:
+            code = ord(ch)
+            if code == 0xa0:
+                code = 0x20
+            # Find first font that has this glyph
+            found = None
+            for f, c2g in fontC2G:
+                if code in c2g:
+                    found = f
+                    break
+            if found is None:
+                found = mainFont  # fall back to main font (.notdef)
+            if found is curFont:
+                curChars.append(ch)
+            else:
+                if curChars:
+                    R.append((curFont, ''.join(curChars)))
+                curFont = found
+                curChars = [ch]
+        if curChars:
+            R.append((curFont, ''.join(curChars)))
+        return R
+    _py_funcs['unicode2TT'] = _py_unicode2TT
+    unicode2TT = _py_unicode2TT
 
 if 'instanceStringWidthT1' in _py_funcs:
     def _py_instanceStringWidthT1(self, text, size, encoding='utf8'):
@@ -101,21 +141,30 @@ if 'instanceStringWidthT1' in _py_funcs:
         if not isUnicode(text): text = text.decode(encoding)
         return sum((sum(map(f.widths.__getitem__,t)) for f, t in _py_unicode2T1(text,[self]+self.substitutionFonts)))*0.001*size
     _py_funcs['instanceStringWidthT1'] = _py_instanceStringWidthT1
+    instanceStringWidthT1 = _py_instanceStringWidthT1
 
 if 'instanceStringWidthTTF' in _py_funcs:
     def _py_instanceStringWidthTTF(self, text, size, encoding='utf8'):
         "Calculate text width"
         if not isUnicode(text):
             text = text.decode(encoding or 'utf8')
+        # Check for fallback fonts (property getter handles env var check)
+        if getattr(self, 'substitutionFonts', None):
+            return 0.001*size*sum((
+                sum((fbFont.face.charWidths.get(ord(u), fbFont.face.defaultWidth) for u in fbText))
+                for fbFont, fbText in _py_unicode2TT(text, [self]+self.substitutionFonts)
+            ))
         g = self.face.charWidths.get
         dw = self.face.defaultWidth
         return 0.001*size*sum((g(ord(u),dw) for u in text))
     _py_funcs['instanceStringWidthTTF'] = _py_instanceStringWidthTTF
+    instanceStringWidthTTF = _py_instanceStringWidthTTF
 
 if 'hex32' in _py_funcs:
     def _py_hex32(i):
         return '0X%8.8X' % (int(i)&0xFFFFFFFF)
     _py_funcs['hex32'] = _py_hex32
+    hex32 = _py_hex32
 
 if 'add32' in _py_funcs:
     def add32(x, y):
@@ -130,6 +179,7 @@ if 'calcChecksum' in _py_funcs:
         if len(data)&3: data = data + (4-(len(data)&3))*b"\0"
         return sum(unpack(">%dl" % (len(data)>>2), data)) & 0xFFFFFFFF
     _py_funcs['calcChecksum'] = _py_calcChecksum
+    calcChecksum = _py_calcChecksum
 
 if 'escapePDF' in _py_funcs:
     _ESCAPEDICT={}
@@ -150,6 +200,7 @@ if 'escapePDF' in _py_funcs:
             r.append(_ESCAPEDICT[c])
         return ''.join(r)
     _py_funcs['escapePDF'] = _py_escapePDF
+    escapePDF = _py_escapePDF
 
 if 'asciiBase85Encode' in _py_funcs:
     def _py_asciiBase85Encode(input):
@@ -233,6 +284,7 @@ if 'asciiBase85Encode' in _py_funcs:
         out('~>')
         return ''.join(out.__self__)
     _py_funcs['asciiBase85Encode'] = _py_asciiBase85Encode
+    asciiBase85Encode = _py_asciiBase85Encode
 
 if 'asciiBase85Decode' in _py_funcs:
     def _py_asciiBase85Decode(input):
@@ -310,6 +362,7 @@ if 'asciiBase85Decode' in _py_funcs:
         r = ''.join(out.__self__)
         return asBytes(r,enc='latin1')
     _py_funcs['asciiBase85Decode'] = _py_asciiBase85Decode
+    asciiBase85Decode = _py_asciiBase85Decode
 
 if 'sameFrag' in _py_funcs:
     def _py_sameFrag(f,g, _cmp=('fontName', 'fontSize', 'textColor', 'rise', 'us_lines', 'link', "backColor", "nobr")):
@@ -320,6 +373,7 @@ if 'sameFrag' in _py_funcs:
         gg = gdict.get
         return [fg(k) for k in _cmp]==[gg(k) for k in _cmp]
     _py_funcs['sameFrag'] = _py_sameFrag
+    sameFrag = _py_sameFrag
 
 G=globals()
 for fn in __all__:

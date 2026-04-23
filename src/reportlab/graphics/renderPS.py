@@ -7,6 +7,7 @@ __doc__="""Render drawing objects in Postscript"""
 import math
 from io import BytesIO, StringIO
 from reportlab.pdfbase.pdfmetrics import getFont, stringWidth, unicode2T1 # for font info
+from reportlab.lib.rl_accel import unicode2TT as _unicode2TT
 from reportlab.lib.utils import asBytes, char2int, rawBytes, asNative, isUnicode
 from reportlab.lib.rl_accel import fp_str
 from reportlab.graphics.renderbase import Renderer, getStateDelta, renderScaledDrawing
@@ -319,7 +320,19 @@ class PSCanvas:
                 x = y = 0
             oldColor = self._color
             if fontObj._dynamicFont:
-                self._textOut(x, y, s, textRenderMode=textRenderMode)
+                if fontObj.substitutionFonts:
+                    for fbFont, fbText in _unicode2TT(s, [fontObj]+fontObj.substitutionFonts):
+                        fbPsName = asNative(fbFont.face.name)
+                        self.code_append('(%s) findfont %s scalefont setfont' % (fbPsName, fp_str(self._fontSize)))
+                        self._textOut(x, y, fbText, textRenderMode=textRenderMode)
+                        x += fbFont.stringWidth(fbText, self._fontSize)
+                        if fbPsName not in self._fontsUsed:
+                            self._fontsUsed.append(fbPsName)
+                    # Restore original font
+                    psName = asNative(fontObj.face.name)
+                    self.code_append('(%s) findfont %s scalefont setfont' % (psName, fp_str(self._fontSize)))
+                else:
+                    self._textOut(x, y, s, textRenderMode=textRenderMode)
             else:
                 self._issueT1String(fontObj,x,y,s, textRenderMode=textRenderMode)
             self.setColor(oldColor)

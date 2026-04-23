@@ -362,7 +362,50 @@ the Vera font as above we can use paragraph text like""")
 parabox2("""<font name="Times-Roman" size="14">This is in Times-Roman</font>
 <font name="Vera" color="magenta" size="14">and this is in magenta <b>Vera!</b></font>""","Using TTF fonts in paragraphs")
 
+heading3("TrueType Font Fallback (Experimental)")
+disc("""
+This is an experimental feature. When a TrueType font does not contain a glyph
+for a character, ReportLab can automatically fall back to a substitute font.
+This is useful for mixed-script documents (e.g. Latin + CJK).
+""")
+disc("""
+The feature is disabled by default. Set the environment variable
+$REPORTLAB_FONT_FALLBACK=1$ to enable it.
+""")
+eg("""
+REPORTLAB_FONT_FALLBACK=1 python your_script.py
+""")
+disc("""
+Configure fallback fonts by setting the $substitutionFonts$ property on a TTFont:
+""")
+eg("""
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
+font = TTFont('NotoSans', 'NotoSans-Regular.ttf')
+fallback = TTFont('NotoSansCJK', 'NotoSansCJK-Regular.ttf')
+pdfmetrics.registerFont(font)
+pdfmetrics.registerFont(fallback)
+font.substitutionFonts = [fallback]
+# Now mixed-script text will automatically use the fallback font
+c.setFont('NotoSans', 12)
+c.drawString(100, 700, 'Hello 你好 World')
+""")
+disc("""
+A convenience function $registerFontWithFallback$ is also available:
+""")
+eg("""
+font = pdfmetrics.registerFontWithFallback(
+    'NotoSans', 'NotoSans-Regular.ttf',
+    fallbackFonts=[TTFont('NotoSansCJK', 'NotoSansCJK-Regular.ttf')]
+)
+""")
+disc("""You can check if a font contains a specific glyph with $hasGlyph()$:
+""")
+eg("""
+font.hasGlyph('A')        # True
+font.hasGlyph(0x4F60)     # False if font lacks CJK glyphs
+""")
 
 
 heading2("Asian Font Support")

@@ -15,6 +15,7 @@ Execute the script to see some test drawings."""
 from reportlab.graphics.shapes import *
 from reportlab.graphics.renderbase import getStateDelta, renderScaledDrawing
 from reportlab.pdfbase.pdfmetrics import getFont, unicode2T1, stringWidth
+from reportlab.lib.rl_accel import unicode2TT as _unicode2TT
 from reportlab.pdfbase.ttfonts import ShapedStr, shapeFragWord
 from reportlab.pdfgen.textobject import bidiShapedText
 from reportlab.lib.utils import isUnicode, asUnicode
@@ -571,7 +572,13 @@ class PMCanvas:
             else:
                 font = getFont(fontName)
                 if font._dynamicFont:
-                    gs.drawString(x,y,text)
+                    if font.substitutionFonts:
+                        for fbFont, fbText in _unicode2TT(text, [font]+font.substitutionFonts):
+                            _setFont(gs, fbFont.fontName, fontSize)
+                            gs.drawString(x, y, fbText)
+                            x += fbFont.stringWidth(fbText, fontSize)
+                    else:
+                        gs.drawString(x,y,text)
                 else:
                     fc = font
                     if not isUnicode(text):

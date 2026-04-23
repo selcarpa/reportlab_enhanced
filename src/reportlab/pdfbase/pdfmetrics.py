@@ -633,6 +633,29 @@ def registerFont(font):
         # bold tags
         registerFontFamily(font.fontName)
 
+def registerFontWithFallback(name, filename, fallbackFonts=None, **kwargs):
+    """Register a TTFont and set its substitutionFonts.
+
+    fallbackFonts can be a list of font name strings (looked up via getFont)
+    or TTFont instances (auto-registered).
+    """
+    from reportlab.pdfbase.ttfonts import TTFont
+    font = TTFont(name, filename, **kwargs)
+    registerFont(font)
+    if fallbackFonts:
+        resolved = []
+        for fb in fallbackFonts:
+            if isinstance(fb, str):
+                resolved.append(getFont(fb))
+            elif isinstance(fb, TTFont):
+                if fb.fontName not in _fonts:
+                    registerFont(fb)
+                resolved.append(fb)
+            else:
+                raise ValueError(f'fallbackFonts elements must be str or TTFont, got {type(fb)}')
+        font.substitutionFonts = resolved
+    return font
+
 def getTypeFace(faceName):
     """Lazily construct known typefaces if not found"""
     try:

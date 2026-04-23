@@ -579,7 +579,7 @@ class PDFTextObject(_PDFColorSetter):
                 tmpl = None
                 r0 = self._rise
                 #it's a truetype font
-                if font.shapable and isinstance(text,ShapedStr):
+                if font.shapable and isinstance(text,ShapedStr) and not font.substitutionFonts:
                     sd0 = 0
                     r0 = self._rise
                     shapeData = text.__shapeData__
@@ -629,13 +629,39 @@ class PDFTextObject(_PDFColorSetter):
                             A(sd.width - sd.x_advance + sd.x_offset)
                     if self._rise!=r0: self.setRise(r0)
                 else:
-                    for subset, t in font.splitString(text, canv._doc):
-                        if subset!=self._curSubset:
+                    # TTFont with possible fallback or shaped text with fallback
+                    if isinstance(text, ShapedStr) and font.substitutionFonts:
+                        import warnings
+                        warnings.warn('TTFont fallback does not support ShapedStr; degrading to non-shaped rendering')
+                        text = str(text)
+                    if font.substitutionFonts:
+                        from reportlab.lib.rl_accel import unicode2TT as _unicode2TT
+                        curFontObj = font
+                        for fbFont, fbText in _unicode2TT(text, [font]+font.substitutionFonts):
+                            for subset, t in fbFont.splitString(fbText, canv._doc):
+                                if fbFont is not curFontObj or subset!=self._curSubset:
+                                    if not tmpl:
+                                        tmpl = f'{fp_str(self._fontsize)} Tf {fp_str(self._leading)} TL'
+                                    R(f'{fbFont.getSubsetInternalName(subset, canv._doc)} {tmpl}')
+                                    self._curSubset = subset
+                                    curFontObj = fbFont
+                                R(f'({canv_escape(t)}) Tj')
+                        # Restore main font if we switched
+                        if curFontObj is not font:
+                            for subset, t in font.splitString('', canv._doc):
+                                pass  # ensure subset exists
                             if not tmpl:
                                 tmpl = f'{fp_str(self._fontsize)} Tf {fp_str(self._leading)} TL'
-                            R(f'{font.getSubsetInternalName(subset, canv._doc)} {tmpl}')
-                            self._curSubset = subset
-                        R(f'({canv_escape(t)}) Tj')
+                            R(f'{font.getSubsetInternalName(0, canv._doc)} {tmpl}')
+                            self._curSubset = 0
+                    else:
+                        for subset, t in font.splitString(text, canv._doc):
+                            if subset!=self._curSubset:
+                                if not tmpl:
+                                    tmpl = f'{fp_str(self._fontsize)} Tf {fp_str(self._leading)} TL'
+                                R(f'{font.getSubsetInternalName(subset, canv._doc)} {tmpl}')
+                                self._curSubset = subset
+                            R(f'({canv_escape(t)}) Tj')
             elif font._multiByte:
                 #all the fonts should really work like this - let them know more about PDF...
                 R("%s %s Tf %s TL" % (

@@ -71,7 +71,8 @@ xmlParser
 textPaths
 toColorCanUse
 defCWRF
-unShapedFontGlob'''.split())
+unShapedFontGlob
+defaultTTFFallbackFonts'''.split())
 
 allowTableBoundsErrors =    1 # set to 0 to die on too large elements in tables in debug (recommend 1 for production use)
 shapeChecking =             1
@@ -274,3 +275,5 @@ if sys.platform.startswith('linux'):
                         '/usr/share/fonts/truetype',
                         '/usr/share/fonts/TTF',
                         )
+
+defaultTTFFallbackFonts = []

@@ -16,6 +16,11 @@ CHANGES  4.5.0   ??/02/2026
     * fix __rl_get_module__ for Python 3.15
     * moved extformat.py elsewhere
     * added combineTransforms
+    * added experimental TTFont fallback support via substitutionFonts property
+      (requires REPORTLAB_FONT_FALLBACK=1 environment variable to enable)
+    * added TTFont.hasGlyph() method
+    * added pdfmetrics.registerFontWithFallback() convenience function
+    * added rl_settings.defaultTTFFallbackFonts configuration option
 
 CHANGES  4.4.10  12/02/2026
 ---------------------------

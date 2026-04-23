@@ -1212,6 +1212,26 @@ class TTFont:
             asciiReadable = rl_config.ttfAsciiReadable
         self._asciiReadable = asciiReadable
         self.shapable = shapable and not any((fnmatch(name,_) for _ in unShapedFontGlob))
+        self._substitutionFonts = []
+
+    @property
+    def substitutionFonts(self):
+        if os.environ.get('REPORTLAB_FONT_FALLBACK', '0') != '1':
+            return []
+        return self._substitutionFonts
+
+    @substitutionFonts.setter
+    def substitutionFonts(self, value):
+        self._substitutionFonts = value
+
+    def hasGlyph(self, char_or_code):
+        if isinstance(char_or_code, str):
+            code = ord(char_or_code)
+        else:
+            code = char_or_code
+        if code == 0xa0:
+            code = 0x20
+        return code in self.face.charToGlyph
 
     def stringWidth(self,text,size,encoding='utf8'):
         return instanceStringWidthTTF(self,text,size,encoding)
