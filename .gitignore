@@ -1,34 +1,136 @@
+# IDE / editor
 /.idea/
 /.venv/
-**/__pycache__/
-/luvcloud_report_gen.egg-info/
+.*.swp
+*~
+.*~
+.DS_STORE
+
+# Python bytecode
+__pycache__/
 *.pyc
 *.pyo
 *.pyd
 .Python
+
+# Virtual environments
 env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
+.venv/
+pyvenv.cfg
+bin/
+Scripts/
+include/
+share/
 lib/
 lib64/
+local/
+
+# Build / dist
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+develop-eggs/
+downloads/
+eggs/
 parts/
 sdist/
 var/
-*.egg-info/
 .installed.cfg
-*.egg
-.DS_Store
+
+# Environment files
 .env
 .env.local
 .env.*.local
+
+# Logs
+*.log
+logs/
+
+# Build artifacts
+*.o
+*.lo
+*.la
+*.obj
+*.pdb
+*.ilk
+*.lib
+*.sbr
+*.bak
+*.rej
+*.orig
+*.cache
+*.zip
+*.user
+*.aps
+*.pch
+*.tlb
+*.tlh
+*.ncb
+*.suo
+*.scc
+*.vspscc
+*.vssscc
+*_i.c
+*_p.c
+
+# Generated files
+devel/
+patches/
+tmp/
+reportlab_settings.py
+reportlab_mod.py
+test_import.py
 gen_*.pdf
 gen_*.docx
-test_import.py
-logs
 
-tests/*.pdf
+# ReportLab build-time downloads
+src/reportlab/fonts/*.pfb
+src/reportlab/fonts/*.afm
+src/reportlab/fonts/*.ttf
+src/reportlab/pdfbase/_glyphlist.py
+
+# Test output
+test_*.pdf
+test_*.svg
+test_*.ps
+test_*.html
+tests/test_*.pdf
+tests/test_*.svg
+tests/test_*.ps
+tests/test_pdfgen_pycanvas_out.txt
+tests/test_source_chars.txt
+tests/_i_am_actually_a_gif.jpg
+tests/_i_am_actually_a_jpeg.gif
+tests/axestest0.svg
+tests/axestest0.ps
+tests/pythonpoint.pdf
+tests/test_renderSVG_output.html
+tests/test_renderPS_output.html
+tests/test_graphics_images.png
+tests/test_graphics_images.gif
+tests/test_graphics_images-cairo.png
+tests/test_graphics_images-cairo.gif
+tests/test_graphics_images-libart.png
+tests/test_graphics_images-libart.gif
+tests/barcode-out/
+tests/render-out/
+tests/charts-out/
+tests/tests/
+
+# Demo output
+demos/stdfonts/*.pdf
+demos/*.pdf
+tools/docco/*.pdf
+
+# ReportLab graphics output
+src/reportlab/graphics/barcode/*.pdf
+src/reportlab/graphics/barcode/test_cbcim.*
+src/reportlab/graphics/pmout
+src/reportlab/graphics/epsout
+src/reportlab/graphics/pdfout
+src/reportlab/graphics/out-svg
+
+# External test resources (fonts)
 tests_resource/*.ttf

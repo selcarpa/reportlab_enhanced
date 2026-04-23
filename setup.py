@@ -1,4 +1,5 @@
-#Copyright ReportLab Europe Ltd. 2000-2025
+#Copyright (c) 2025-2026, selcarpa
+#Copyright (c) 2000-2025, ReportLab Inc.
 #see LICENSE for license details
 __version__='4.4.5'
 import os, sys, glob, shutil, re, sysconfig, traceback, io, subprocess
@@ -291,15 +292,17 @@ def main():
 
     from setuptools import setup
     setup(
-        name="reportlab",
+        name="reportlab-enhanced",
         version=get_version(),
-        license="BSD license (see license.txt for details), Copyright (c) 2000-2025, ReportLab Inc.",
-        description="The Reportlab Toolkit",
-        long_description="""The ReportLab Toolkit. An Open Source Python library for generating PDFs and graphics.""",
+        license="BSD license (see LICENSE for details), Copyright (c) 2025-2026 selcarpa, Copyright (c) 2000-2024 ReportLab Inc.",
+        description="The ReportLab Toolkit (Enhanced Fork)",
+        long_description="""reportlab-enhanced: An enhanced fork of the ReportLab Toolkit.
+An Open Source Python library for generating PDFs and graphics,
+with TrueType font fallback and other improvements.""",
 
-        author="Andy Robinson, Robin Becker, the ReportLab team and the community",
-        author_email="reportlab-users@lists2.reportlab.com",
-        url="https://www.reportlab.com/",
+        author="selcarpa, Andy Robinson, Robin Becker, the ReportLab team and the community",
+        author_email="selcarpa@gmail.com",
+        url="https://github.com/selcarpa/reportlab_enhanced",
         packages=[
                 'reportlab',
                 'reportlab.graphics.charts',
@@ -315,7 +318,7 @@ def main():
         package_dir = PACKAGE_DIR,
         package_data = {'reportlab': reportlab_files},
         classifiers = [
-            'Development Status :: 5 - Production/Stable',
+            'Development Status :: 4 - Beta',
             'Intended Audience :: Developers',
             'License :: OSI Approved :: BSD License',
             'Topic :: Printing',
