@@ -7,7 +7,7 @@ __doc__ = """
 This module contains the script for building the user guide.
 """
 
-def run(pagesize=None, verbose=0, outDir=None):
+def run(pagesize=None, verbose=0, outDir=None, lang='en'):
     import sys,os
     from reportlab.lib.utils import open_and_read
     cwd = os.getcwd()
@@ -16,6 +16,10 @@ def run(pagesize=None, verbose=0, outDir=None):
     if not outDir: outDir=docsDir
     G = {}
     sys.path.insert(0,topDir)
+    sys.path.insert(0,docsDir)
+    if lang != 'en':
+        from docs.i18n import set_language
+        set_language(lang.replace('-', '_'))
     from reportlab.pdfbase.pdfmetrics import registerFontFamily
     from reportlab.pdfbase import pdfmetrics
     from reportlab.pdfbase.ttfonts import TTFont
@@ -29,7 +33,12 @@ def run(pagesize=None, verbose=0, outDir=None):
     from tools.docco.rltemplate import RLDocTemplate
     from tools.docco import rl_doc_utils
     exec('from tools.docco.rl_doc_utils import *', G, G)
-    destfn = os.path.join(outDir,'reportlab-userguide.pdf')
+    if lang != 'en':
+        destfn = os.path.join(outDir,'reportlab-userguide-%s.pdf' % lang)
+        chapterDir = os.path.join(os.path.dirname(__file__), lang)
+    else:
+        destfn = os.path.join(outDir,'reportlab-userguide.pdf')
+        chapterDir = os.path.dirname(__file__)
     doc = RLDocTemplate(destfn,pagesize = pagesize or defaultPageSize)
 
 
@@ -52,8 +61,17 @@ def run(pagesize=None, verbose=0, outDir=None):
         'graph_widgets',
         'app_demos',
         ):
-        #python source is supposed to be utf8 these days
-        exec(open_and_read(f+'.py', mode='r'), G, G)
+        chapterPath = os.path.join(chapterDir, f + '.py')
+        if os.path.isfile(chapterPath):
+            exec(open_and_read(chapterPath, mode='r'), G, G)
+        else:
+            i = 1
+            while True:
+                splitPath = os.path.join(chapterDir, f + '_%d.py' % i)
+                if not os.path.isfile(splitPath):
+                    break
+                exec(open_and_read(splitPath, mode='r'), G, G)
+                i += 1
     del G
 
     story = getStory()
@@ -75,6 +93,13 @@ def main():
         outDir = outDir[9:]
     else:
         outDir = None
+    lang = [x for x in sys.argv if x[:7]=='--lang=']
+    if lang:
+        lang = lang[0]
+        sys.argv.remove(lang)
+        lang = lang[7:]
+    else:
+        lang = 'en'
     verbose = '-s' not in sys.argv
     if not verbose: sys.argv.remove('-s')
     timing = '-timing' in sys.argv
@@ -95,13 +120,13 @@ def main():
     if timing:
         from time import time
         t0 = time()
-        run(pagesize, verbose,outDir)
+        run(pagesize, verbose,outDir, lang=lang)
         if verbose:
             print('Generation of userguide took %.2f seconds' % (time()-t0))
     elif prof:
         import profile
-        profile.run('run(pagesize,verbose,outDir)','genuserguide.stats')
+        profile.run('run(pagesize,verbose,outDir, lang=lang)','genuserguide.stats')
     else:
-        run(pagesize, verbose,outDir)
+        run(pagesize, verbose,outDir, lang=lang)
 if __name__=="__main__":
     main()

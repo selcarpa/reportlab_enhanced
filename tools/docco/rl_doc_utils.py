@@ -30,6 +30,14 @@ from . import examples
 
 appmode=0
 
+def _get_i18n():
+    try:
+        from docs.i18n import get_strings
+        return get_strings()
+    except ImportError:
+        from docs.i18n import en
+        return en
+
 from .t_parse import Template
 QFcodetemplate = Template("X$X$", "X")
 QFreptemplate = Template("X^X^", "X")
@@ -144,7 +152,8 @@ def space(inches=1./6):
 
 def EmbeddedCode(code,name='t'):
     eg(code)
-    disc("produces")
+    _s = _get_i18n()
+    disc(_s.PRODUCES)
     exec(code+("\ngetStory().append(%s)\n"%name))
 
 def startKeep():
@@ -162,7 +171,10 @@ def title(text):
 #AR 3/7/2000 - defining three new levels of headings; code
 #should be swapped over to using them.
 
-def headingTOC(text='Table of contents'):
+def headingTOC(text=None):
+    _s = _get_i18n()
+    if text is None:
+        text = _s.TABLE_OF_CONTENTS
     getStory().append(PageBreak())
     p = Paragraph(text, H1)
     getStory().append(p)
@@ -170,18 +182,21 @@ def headingTOC(text='Table of contents'):
 def heading1(text):
     """Use this for chapters.  Lessons within a big chapter
     should now use heading2 instead.  Chapters get numbered."""
+    _s = _get_i18n()
     getStory().append(PageBreak())
-    p = Paragraph('Chapter <seq id="Chapter"/> ' + quickfix(text), H1)
+    chapter_suffix = getattr(_s, 'CHAPTER_SUFFIX', ' ')
+    p = Paragraph(f'{_s.CHAPTER} <seq id="Chapter"/>{chapter_suffix} ' + quickfix(text), H1)
     getStory().append(p)
 
 def Appendix1(text,):
     global appmode
+    _s = _get_i18n()
     getStory().append(PageBreak())
     if not appmode:
         seq.setFormat('Chapter','A')
         seq.reset('Chapter')
         appmode = 1
-    p = Paragraph('Appendix <seq id="Chapter"/> ' + quickfix(text), H1)
+    p = Paragraph(f'{_s.APPENDIX} <seq id="Chapter"/> ' + quickfix(text), H1)
     getStory().append(p)
 
 def heading2(text):
@@ -232,9 +247,9 @@ class Illustration(figures.Figure):
             width = stdwidth
         if not height:
             height = stdheight
-        #figures.Figure.__init__(self, stdwidth * 0.75, stdheight * 0.75)
+        _s = _get_i18n()
         figures.Figure.__init__(self, width, height,
-                    'Figure <seq template="%(Chapter)s-%(Figure+)s"/>: ' + quickfix(caption))
+                    f'{_s.FIGURE} <seq template="%(Chapter)s-%(Figure+)s"/>: ' + quickfix(caption))
         self.operation = operation
 
     def drawFigure(self):
@@ -252,10 +267,11 @@ class GraphicsDrawing(Illustration):
     """Lets you include reportlab/graphics drawings seamlessly,
     with the right numbering."""
     def __init__(self, drawing, caption):
+        _s = _get_i18n()
         figures.Figure.__init__(self,
                                   drawing.width,
                                   drawing.height,
-                    'Figure <seq template="%(Chapter)s-%(Figure+)s"/>: ' + quickfix(caption)
+                    f'{_s.FIGURE} <seq template="%(Chapter)s-%(Figure+)s"/>: ' + quickfix(caption)
                                   )
         self.drawing = drawing
 
@@ -382,14 +398,16 @@ class ParaBox2(figures.Figure):
                          )
 
 def parabox(text, style, caption):
+    _s = _get_i18n()
     p = ParaBox(text, style,
-                'Figure <seq template="%(Chapter)s-%(Figure+)s"/>: ' + quickfix(caption)
+                f'{_s.FIGURE} <seq template="%(Chapter)s-%(Figure+)s"/>: ' + quickfix(caption)
                 )
     getStory().append(p)
 
 def parabox2(text, caption):
+    _s = _get_i18n()
     p = ParaBox2(text,
-                'Figure <seq template="%(Chapter)s-%(Figure+)s"/>: ' + quickfix(caption)
+                f'{_s.FIGURE} <seq template="%(Chapter)s-%(Figure+)s"/>: ' + quickfix(caption)
                 )
     getStory().append(p)
 

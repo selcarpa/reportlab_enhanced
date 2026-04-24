@@ -84,6 +84,8 @@ reportlab_mod.py
 test_import.py
 gen_*.pdf
 gen_*.docx
+docs/reportlab-userguide*.pdf
+docs/source/_locale/
 
 # ReportLab build-time downloads
 src/reportlab/fonts/*.pfb

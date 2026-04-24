@@ -10,6 +10,14 @@ from reportlab.lib.units import inch
 from reportlab.lib.sequencer import Sequencer
 from reportlab.rl_config import defaultPageSize
 
+def _get_i18n():
+    try:
+        from docs.i18n import get_strings
+        return get_strings()
+    except ImportError:
+        from docs.i18n import en
+        return en
+
 class FrontCoverTemplate(PageTemplate):
     def __init__(self, id, pageSize=defaultPageSize):
         self.pageWidth = pageSize[0]
@@ -22,16 +30,17 @@ class FrontCoverTemplate(PageTemplate):
 
     def afterDrawPage(self, canvas, doc):
         canvas.saveState()
-        canvas.drawImage('../images/replogo.gif',2*inch, 8*inch)
+        canvas.drawImage('docs/images/replogo.gif',2*inch, 8*inch)
 
 
         canvas.setFont('Times-Roman', 10)
         canvas.line(inch, 120, self.pageWidth - inch, 120)
 
-        canvas.drawString(inch, 100, 'ReportLab')
-        canvas.drawString(inch, 88, 'Wimbletech')
-        canvas.drawString(inch, 76, '35 Wimbledon Hill Road')
-        canvas.drawString(inch, 64, 'London SW19 7NB, UK')
+        _s = _get_i18n()
+        canvas.drawString(inch, 100, _s.COVER_COMPANY)
+        canvas.drawString(inch, 88, _s.COVER_LINE1)
+        canvas.drawString(inch, 76, _s.COVER_LINE2)
+        canvas.drawString(inch, 64, _s.COVER_LINE3)
 
         canvas.restoreState()
 
@@ -54,7 +63,8 @@ class OneColumnTemplate(PageTemplate):
         canvas.drawString(inch, y+8, doc.title)
         canvas.drawRightString(self.pageWidth - inch, y+8, doc.chapter)
         canvas.line(inch, y, self.pageWidth - inch, y)
-        canvas.drawCentredString(doc.pagesize[0] / 2, 0.75*inch, 'Page %d' % canvas.getPageNumber())
+        _s = _get_i18n()
+        canvas.drawCentredString(doc.pagesize[0] / 2, 0.75*inch, _s.PAGE % canvas.getPageNumber())
         canvas.restoreState()
 
 class TOCTemplate(PageTemplate):
@@ -69,13 +79,14 @@ class TOCTemplate(PageTemplate):
         PageTemplate.__init__(self, id, [frame1])  # note lack of onPage
 
     def afterDrawPage(self, canvas, doc):
+        _s = _get_i18n()
         y = self.pageHeight - 50
         canvas.saveState()
         canvas.setFont('Times-Roman', 10)
         canvas.drawString(inch, y+8, doc.title)
-        canvas.drawRightString(self.pageWidth - inch, y+8, 'Table of contents')
+        canvas.drawRightString(self.pageWidth - inch, y+8, _s.TABLE_OF_CONTENTS)
         canvas.line(inch, y, self.pageWidth - inch, y)
-        canvas.drawCentredString(doc.pagesize[0] / 2, 0.75*inch, 'Page %d' % canvas.getPageNumber())
+        canvas.drawCentredString(doc.pagesize[0] / 2, 0.75*inch, _s.PAGE % canvas.getPageNumber())
         canvas.restoreState()
 
 class TwoColumnTemplate(PageTemplate):
@@ -96,13 +107,14 @@ class TwoColumnTemplate(PageTemplate):
         PageTemplate.__init__(self, id, [frame1, frame2])  # note lack of onPage
 
     def afterDrawPage(self, canvas, doc):
+        _s = _get_i18n()
         y = self.pageHeight - 50
         canvas.saveState()
         canvas.setFont('Times-Roman', 10)
         canvas.drawString(inch, y+8, doc.title)
         canvas.drawRightString(self.pageWidth - inch, y+8, doc.chapter)
         canvas.line(inch, y, self.pageWidth - inch, y*inch)
-        canvas.drawCentredString(doc.pagesize[0] / 2, 0.75*inch, 'Page %d' % canvas.getPageNumber())
+        canvas.drawCentredString(doc.pagesize[0] / 2, 0.75*inch, _s.PAGE % canvas.getPageNumber())
         canvas.restoreState()
 
 
@@ -115,9 +127,10 @@ class RLDocTemplate(BaseDocTemplate):
         self.seq = Sequencer()
 
     def beforeDocument(self):
+        _s = _get_i18n()
         self.canv.showOutline()
-        self.title = "(Document Title Goes Here)"
-        self.chapter = "(No chapter yet)"
+        self.title = _s.DOCUMENT_TITLE
+        self.chapter = _s.NO_CHAPTER_YET
         self.seq.reset('section')
         self.seq.reset('chapter')
 
