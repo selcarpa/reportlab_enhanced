@@ -1,0 +1,10 @@
+[project]
+name = "reportlab-userguide-web"
+version = "0.1.0"
+description = "ReportLab User Guide MkDocs site with i18n support"
+requires-python = ">=3.9"
+dependencies = [
+    "mkdocs>=1.5",
+    "mkdocs-material>=9.0",
+    "mkdocs-static-i18n>=1.0",
+]

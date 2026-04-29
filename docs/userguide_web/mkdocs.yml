@@ -1,0 +1,76 @@
+site_name: ReportLab User Guide
+docs_dir: docs
+site_dir: site
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.expand
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  icon:
+    alternate: material/translate
+
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true
+  - attr_list
+  - md_in_html
+
+plugins:
+  - i18n:
+      docs_structure: folder
+      fallback_to_default: true
+      reconfigure_material: true
+      reconfigure_search: true
+      languages:
+        - locale: en
+          name: English
+          default: true
+          nav:
+            - Home: index.md
+            - 'Chapter 1: Introduction': ch1_intro.md
+            - 'Chapter 2: Graphics': ch2_graphics.md
+            - 'Chapter 2a: Fonts': ch2a_fonts.md
+            - 'Chapter 3: PDF Features': ch3_pdffeatures.md
+            - 'Chapter 4: PLATYPUS': ch4_platypus_concepts.md
+            - 'Chapter 5: Paragraphs': ch5_paragraphs.md
+            - 'Chapter 6: Tables': ch6_tables.md
+            - 'Chapter 7: Custom Flowables': ch7_custom.md
+            - 'Graphics':
+              - 'Introduction': graph_intro.md
+              - 'Concepts': graph_concepts.md
+              - 'Charts': graph_charts.md
+              - 'Shapes': graph_shapes.md
+              - 'Widgets': graph_widgets.md
+            - 'Appendix: Demos': app_demos.md
+        - locale: zh
+          name: 中文
+          nav:
+            - Home: index.md
+            - '第1章: 简介': ch1_intro.md
+            - '第2章: 图形': ch2_graphics.md
+            - '第2a章: 字体': ch2a_fonts.md
+            - '第3章: PDF 功能': ch3_pdffeatures.md
+            - '第4章: PLATYPUS': ch4_platypus_concepts.md
+            - '第5章: 段落': ch5_paragraphs.md
+            - '第6章: 表格': ch6_tables.md
+            - '第7章: 自定义 Flowables': ch7_custom.md
+            - '图形':
+              - '简介': graph_intro.md
+              - '概念': graph_concepts.md
+              - '图表': graph_charts.md
+              - '形状': graph_shapes.md
+              - '控件': graph_widgets.md
+            - '附录: 示例': app_demos.md

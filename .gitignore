@@ -86,6 +86,11 @@ gen_*.pdf
 gen_*.docx
 docs/reportlab-userguide*.pdf
 docs/source/_locale/
+docs/userguide_web/site/
+docs/userguide_web/.venv/
+docs/userguide_web/docs/en/
+docs/userguide_web/docs/zh/
+
 
 # ReportLab build-time downloads
 src/reportlab/fonts/*.pfb
