@@ -19,28 +19,28 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v4
 
-      - name: Install dependencies
+      - name: Install project dependencies
+        run: uv sync
+
+      - name: Convert chapters to Markdown (English)
+        run: uv run python docs/userguide_web/py2md.py
+
+      - name: Convert chapters to Markdown (Chinese)
+        run: uv run python docs/userguide_web/py2md.py --zh-CN
+
+      - name: Install MkDocs dependencies
         run: uv sync
         working-directory: docs/userguide_web
 
-      - name: Convert chapters to Markdown (English)
-        run: uv run python py2md.py
-        working-directory: docs/userguide_web
-
-      - name: Convert chapters to Markdown (Chinese)
-        run: uv run python py2md.py --zh-CN
-        working-directory: docs/userguide_web
-
       - name: Build MkDocs site
-        run: uv run python build.py
-        working-directory: docs/userguide_web
+        run: uv run python docs/userguide_web/build.py
 
       - name: Zip site
-        run: zip -r reportlab-userguide.zip site/
+        run: zip -r reportlab-userguide.zip docs/userguide_web/site/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: reportlab-userguide
-          path: docs/userguide_web/reportlab-userguide.zip
+          path: reportlab-userguide.zip
           retention-days: 30
