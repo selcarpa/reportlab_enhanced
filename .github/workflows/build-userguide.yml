@@ -1,0 +1,46 @@
+name: Build User Guide
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync
+        working-directory: docs/userguide_web
+
+      - name: Convert chapters to Markdown (English)
+        run: uv run python py2md.py
+        working-directory: docs/userguide_web
+
+      - name: Convert chapters to Markdown (Chinese)
+        run: uv run python py2md.py --zh-CN
+        working-directory: docs/userguide_web
+
+      - name: Build MkDocs site
+        run: uv run python build.py
+        working-directory: docs/userguide_web
+
+      - name: Zip site
+        run: zip -r reportlab-userguide.zip site/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: reportlab-userguide
+          path: docs/userguide_web/reportlab-userguide.zip
+          retention-days: 30
