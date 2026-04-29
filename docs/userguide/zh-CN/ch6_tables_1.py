@@ -237,7 +237,7 @@ import os, reportlab.platypus
 from reportlab.lib.units import inch
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
-I = 'docs/images/replogo.gif'
+I = '../images/replogo.gif'
 EmbeddedCode("""
 I = Image('%s')
 I.drawHeight = 1.25*inch*I.drawHeight / I.drawWidth

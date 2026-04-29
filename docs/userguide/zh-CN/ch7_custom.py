@@ -60,7 +60,7 @@ disc("""要修改现有的 Flowable，您应该创建一个派生类，
 disc("""例如，要创建旋转图像，您需要重写现有 Image 类的 wrap 和 draw 方法。""")
 import os
 from reportlab.platypus import *
-I = 'docs/images/replogo.gif'
+I = '../images/replogo.gif'
 
 EmbeddedCode("""
 class RotatedImage(Image):

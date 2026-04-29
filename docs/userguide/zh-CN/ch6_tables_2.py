@@ -68,7 +68,7 @@ $filename$ 可以是文件路径、类文件对象或 $reportlab.graphics.shapes
 它们将确定显示图像的尺寸，单位为<i>磅</i>。
 如果任一维度未指定（或指定为 $None$），则假定图像的相应像素维度以<i>磅</i>为单位并直接使用。
 """)
-I="docs/images/lj8100.jpg"
+I="../images/lj8100.jpg"
 eg("""
 Image("lj8100.jpg")
 """,after=0.1)
