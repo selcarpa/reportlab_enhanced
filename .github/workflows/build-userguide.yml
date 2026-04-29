@@ -30,19 +30,19 @@ jobs:
       - name: Convert chapters to Markdown (Chinese)
         run: uv run python docs/userguide_web/py2md.py --zh-CN
 
-      - name: Install MkDocs dependencies
-        run: uv sync
+      - name: Install MkDocs and build site
+        run: |
+          uv sync
+          uv run python build.py
         working-directory: docs/userguide_web
 
-      - name: Build MkDocs site
-        run: uv run python docs/userguide_web/build.py
-
       - name: Zip site
-        run: zip -r reportlab-userguide.zip docs/userguide_web/site/
+        run: zip -r reportlab-userguide.zip site/
+        working-directory: docs/userguide_web
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: reportlab-userguide
-          path: reportlab-userguide.zip
+          path: docs/userguide_web/reportlab-userguide.zip
           retention-days: 30
