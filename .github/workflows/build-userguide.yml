@@ -36,13 +36,9 @@ jobs:
           uv run python build.py
         working-directory: docs/userguide_web
 
-      - name: Zip site
-        run: zip -r reportlab-userguide.zip site/
-        working-directory: docs/userguide_web
-
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: reportlab-userguide
-          path: docs/userguide_web/reportlab-userguide.zip
+          path: docs/userguide_web/site/
           retention-days: 30

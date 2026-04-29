@@ -227,7 +227,9 @@ def resolve_chapter_files(chapter_dir, name):
     return files
 
 
-def convert_chapters(lang='en'):
+def convert_chapters(lang='en', output_lang=None):
+    if output_lang is None:
+        output_lang = lang
     script_dir = os.path.dirname(os.path.abspath(__file__))
     docs_dir = os.path.dirname(script_dir)
     top_dir = os.path.dirname(docs_dir)
@@ -241,7 +243,7 @@ def convert_chapters(lang='en'):
     else:
         chapter_dir = userguide_dir
 
-    output_dir = os.path.join(script_dir, 'docs', lang)
+    output_dir = os.path.join(script_dir, 'docs', output_lang)
     os.makedirs(output_dir, exist_ok=True)
 
     writer = MarkdownWriter()
@@ -326,4 +328,4 @@ if __name__ == '__main__':
     lang = 'en'
     if len(sys.argv) > 1 and sys.argv[1] == '--zh-CN':
         lang = 'zh-CN'
-    convert_chapters(lang=lang)
+    convert_chapters(lang=lang, output_lang='zh' if lang != 'en' else 'en')
