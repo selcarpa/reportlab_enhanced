@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "reportlab-enhanced"
-version = "4.4.10"
+version = "0.0.1"
 description = "The ReportLab Toolkit (Enhanced Fork)"
 readme = "README.md"
 license = {text = "BSD license (see LICENSE for details), Copyright (c) 2025-2026 selcarpa, Copyright (c) 2000-2024 ReportLab Inc."}

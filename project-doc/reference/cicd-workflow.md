@@ -6,7 +6,7 @@
 
 ```toml
 [project]
-version = "4.4.10"
+version = "0.0.1"
 ```
 
 运行时通过 `importlib.metadata.version('reportlab-enhanced')` 获取版本。
@@ -44,29 +44,40 @@ git push origin x.y.z-release
 **Dry Run 验证内容：**
 - ✅ 版本一致性检查
 - ✅ 测试套件运行
-- ✅ 文档构建
-- ✅ Pages 部署
 - ✅ wheel + sdist 构建
 - ❌ 不发布到 PyPI
 - ❌ 不创建 GitHub Release
 
 ## 自动化流程
 
-打标签后自动执行：
+正式发布流程：
 
 ```
 check-version      → 验证版本一致性
        ↓
 test               → 运行测试套件
        ↓
-build-docs         → 构建 MkDocs 文档
-       ↓                        ↓
-deploy-pages       → 部署到 GitHub Pages
-                        ↓
-publish-pypi       → 构建 wheel + sdist → 发布到 PyPI
-       ↓
-create-github-release → 创建 GitHub Release
+build-and-publish  → 构建 wheel + sdist → 发布到 PyPI → 创建 GitHub Release
 ```
+
+Dry Run 流程：
+
+```
+check-version      → 验证版本一致性
+       ↓
+test               → 运行测试套件
+       ↓
+build-dry-run      → 构建 wheel + sdist (artifact 可下载)
+```
+
+## Job 说明
+
+| Job | 触发条件 | 功能 |
+|-----|---------|------|
+| check-version | 始终 | 验证版本一致性 |
+| test | 始终 | 运行测试套件 |
+| build-and-publish | 非 dry_run | 构建 + PyPI 发布 + Release 创建 |
+| build-dry-run | dry_run | 仅构建，生成 artifact |
 
 ## 发布前检查清单
 
