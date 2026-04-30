@@ -306,16 +306,32 @@ def convert_chapters(lang='en', output_lang=None):
             f.write(writer.get_output())
         print(f'  Generated: {out_path}')
 
-    _generate_index(output_dir)
+    _generate_index(output_dir, output_lang)
     print(f'\nDone. Output in: {output_dir}')
 
 
-def _generate_index(output_dir):
+def _extract_title(md_path):
+    """Extract first heading title from a markdown file."""
+    import re
+    try:
+        with open(md_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                match = re.match(r'^#+\s+(.+)$', line.strip())
+                if match:
+                    return match.group(1).strip()
+    except Exception:
+        pass
+    return None
+
+
+def _generate_index(output_dir, lang='en'):
     lines = ['# ReportLab User Guide', '']
     for chapter_name in CHAPTER_ORDER:
         md_path = os.path.join(output_dir, f'{chapter_name}.md')
         if os.path.isfile(md_path):
-            title = chapter_name.replace('_', ' ').replace('graph ', 'Graphics - ').title()
+            title = _extract_title(md_path)
+            if not title:
+                title = chapter_name.replace('_', ' ').replace('graph ', 'Graphics - ').title()
             lines.append(f'- [{title}]({chapter_name}.md)')
     lines.append('')
     index_path = os.path.join(output_dir, 'index.md')
