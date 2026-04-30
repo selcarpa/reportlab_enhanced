@@ -73,6 +73,9 @@ jobs:
           uv venv
           uv pip install pillow charset-normalizer setuptools
 
+      - name: Generate required files
+        run: uv run --no-project python setup.py egg_info
+
       - name: Run tests
         run: uv run --no-project python setup.py tests-preinstall
 
