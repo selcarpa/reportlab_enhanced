@@ -1,0 +1,185 @@
+name: Release and Deploy
+
+on:
+  push:
+    branches: [master]
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+-release'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run mode - test workflow without publishing'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # 验证标签版本与代码版本一致
+  check-version:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Verify tag matches code version
+        id: check
+        run: |
+          TAG_VERSION=${GITHUB_REF#refs/tags/}
+          TAG_VERSION=${TAG_VERSION%-release}
+          CODE_VERSION=$(grep -oP 'version\s*=\s*"\K[^"]+' pyproject.toml)
+          
+          echo "Tag version: $TAG_VERSION"
+          echo "Code version: $CODE_VERSION"
+          
+          if [ "$TAG_VERSION" != "$CODE_VERSION" ]; then
+            echo "❌ Version mismatch!"
+            echo "Tag: $TAG_VERSION, Code: $CODE_VERSION"
+            exit 1
+          fi
+          
+          echo "✅ Version match: $CODE_VERSION"
+          echo "version=$CODE_VERSION" >> $GITHUB_OUTPUT
+
+  # 运行测试套件
+  test:
+    needs: check-version
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+      
+      - name: Create venv and install project
+        run: |
+          uv venv
+          uv pip install -e .
+      
+      - name: Run tests
+        run: uv run python setup.py tests-preinstall
+
+  # 构建文档
+  build-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+      
+      - name: Create venv and install project
+        run: |
+          uv venv
+          uv pip install -e .
+      
+      - name: Convert chapters to Markdown (English)
+        run: uv run python docs/userguide_web/py2md.py
+      
+      - name: Convert chapters to Markdown (Chinese)
+        run: uv run python docs/userguide_web/py2md.py --zh-CN
+      
+      - name: Install MkDocs and build site
+        run: |
+          uv sync
+          uv run python build.py
+        working-directory: docs/userguide_web
+      
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/userguide_web/site/
+
+  # 部署到 GitHub Pages
+  deploy-pages:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build-docs
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # 发布到 PyPI
+  publish-pypi:
+    needs: [check-version, test]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    environment: release
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install build dependencies
+        run: pip install build twine
+      
+      - name: Build wheel and sdist
+        run: python -m build
+      
+      - name: Upload dist artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      
+      - name: Publish to PyPI
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        uses: pypa/gh-action-pypi-publish@release/v1
+      
+      - name: Skip PyPI publish (dry run)
+        if: ${{ github.event.inputs.dry_run == 'true' }}
+        run: echo "🏃 Dry run mode - skipping PyPI publish"
+
+  # 创建 GitHub Release
+  create-github-release:
+    needs: publish-pypi
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      
+      - name: Create GitHub Release
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        uses: softprops/action-gh-release@v1
+        with:
+          generate_release_notes: true
+          files: dist/*
+      
+      - name: Skip GitHub Release (dry run)
+        if: ${{ github.event.inputs.dry_run == 'true' }}
+        run: echo "🏃 Dry run mode - skipping GitHub Release"

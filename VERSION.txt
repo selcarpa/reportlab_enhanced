@@ -1,1 +1,13 @@
-The "master version number" lives in src/reportlab/__init__.py.  Sorry!
+Version Management
+==================
+
+The single source of truth for the version number is in:
+
+    src/reportlab/__init__.py
+
+    Version = "x.y.z"
+
+This version is automatically read by:
+- setup.py during build (via get_version())
+- pyproject.toml configuration (dynamic version)
+- GitHub Actions workflow (version verification)

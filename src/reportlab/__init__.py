@@ -2,8 +2,33 @@
 #Copyright (c) 2000-2023, ReportLab Europe Ltd.
 #see LICENSE for license details
 __doc__="""reportlab-enhanced: An enhanced fork of the ReportLab PDF generation library."""
-Version = "4.4.10"
-__version__=Version
+
+import os
+
+def _get_version():
+    try:
+        from importlib.metadata import version
+        return version('reportlab-enhanced')
+    except Exception:
+        pass
+    try:
+        from importlib.metadata import version as vp
+        return vp('reportlab_enhanced')
+    except Exception:
+        pass
+    pkg_dir = os.path.dirname(__file__)
+    pyproject = os.path.join(os.path.dirname(pkg_dir), 'pyproject.toml')
+    if os.path.exists(pyproject):
+        import re
+        with open(pyproject) as f:
+            content = f.read()
+        m = re.search(r'^version\s*=\s*["\']([^"\']+)["\']', content, re.M)
+        if m:
+            return m.group(1)
+    return "0.0.0"
+
+Version = _get_version()
+__version__ = Version
 __date__='20260212'
 
 import sys, os
