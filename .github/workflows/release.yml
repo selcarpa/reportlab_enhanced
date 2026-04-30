@@ -77,7 +77,11 @@ jobs:
         run: uv run --no-project python setup.py egg_info
 
       - name: Run tests
-        run: uv run --no-project python setup.py tests-preinstall
+        run: |
+          echo "::group::Test Results"
+          uv run --no-project python setup.py tests-preinstall
+          echo "::endgroup::"
+          echo "::notice::✅ All tests passed! Ready for release."
 
   # 构建和发布 (正式发布)
   build-and-publish:
