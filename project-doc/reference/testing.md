@@ -45,9 +45,9 @@ python runAll.py --failfast --verbosity=2 --exclude=test_graphics_speed,test_doc
 - 每个文件必须实现 `makeSuite()` 函数，返回测试套件
 - 以 `_` 开头的文件（如 `_ttfont_fallback_helpers.py`）不会被当作测试文件
 
-## TTFont Fallback 测试
+## 测试分类
 
-Fallback 测试拆分为 4 个文件：
+### 1. TTFont Fallback 测试
 
 | 文件 | 说明 | 依赖 |
 |------|------|------|
@@ -58,16 +58,38 @@ Fallback 测试拆分为 4 个文件：
 
 共享辅助代码在 `_ttfont_fallback_helpers.py` 中。
 
-### 外部字体
+### 2. OTF/OpenType 测试
 
-多语种测试需要 `tests_resource/` 目录下的外部字体文件。如果缺失，相关测试类会自动 skip，不影响其他测试。
+| 文件 | 说明 |
+|------|------|
+| `test_otf_loading.py` | OTF/TTF 字体加载 |
+| `test_otf_metrics.py` | 字体验证（glyph count、bbox等） |
+| `test_otf_subsetting.py` | 子集化测试 |
+| `test_otf_rendering.py` | PDF渲染（生成实际PDF文件） |
+| `test_otf_asian.py` | 亚洲CJK文本渲染 |
+| `test_otf_fallback.py` | OTF + TTF 混合回退 |
 
-所需字体：
-- `NotoSansSC-Regular.ttf`
-- `NotoSansKR-Bold.ttf`
-- `Gentium-BoldItalic.ttf`
-- `TheanoDidot-Regular.ttf`
-- `NotoEmoji-Regular.ttf`
+### 3. 传统TTF测试
+
+| 文件 | 说明 |
+|------|------|
+| `test_pdfbase_ttfonts.py` | TrueType 核心功能测试 |
+
+### 共享辅助代码
+
+- `_ttfont_fallback_helpers.py` — fallback 测试辅助函数
+
+## 外部字体
+
+OTF/OpenType 测试需要 `tests_resource/` 目录下的外部字体。从以下地址下载：
+
+```
+https://reportlab-enhanced.tain.one/test-resource.zip
+```
+
+详细信息见 `tests_resource/README.md`。
+
+如果缺失字体，相关测试会自动 skip，不影响其他测试。
 
 ## 环境变量
 
