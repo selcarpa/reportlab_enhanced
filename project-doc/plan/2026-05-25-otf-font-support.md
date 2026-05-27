@@ -1,139 +1,5 @@
 # ReportLab OTF (CFF) Font Support 设计方案
 
-## 0. 模块架构
-
-### 0.1 双包设计
-
-本方案采用双包架构，将字体核心逻辑与向后兼容分离：
-
-| 文件/包 | 角色 | 说明 |
-|--------|------|------|
-| `src/reportlab/pdfbase/openfonts/` | **主包（新）** | 包含所有字体逻辑的全新包，命名反映 OpenType 标准 |
-| `src/reportlab/pdfbase/ttfonts.py` | **兼容层（已过期）** | 仅保留向后兼容别名，导入自 `openfonts`，标注 `@deprecated` |
-
-**设计原则**：
-- `openfonts/` 包是未来所有开发的起点，新类名、新功能全部在此
-- `ttfonts.py` 完全不承载新逻辑，仅做兼容转发，避免代码重复
-- 两模块共存期间，`import` 路径对用户透明（`from reportlab.pdfbase import ttfonts` 继续工作）
-
-### 0.2 新模块文件清单
-
-本方案采用**包结构**（而非单文件），将字体逻辑拆分为多个内聚的子模块：
-
-```
-src/reportlab/pdfbase/openfonts/
-├── __init__.py       # 包入口，导出主类 + 向后兼容别名
-├── _common.py         # 公共定义：错误类、SUBSETN、辅助函数
-├── _sfnt.py           # FontParser 基类（sfnt 二进制解析）
-├── _ttf.py            # FontFile、FontMaker（TrueType 专用）
-├── _cff.py            # CFFParser、CFFSubsetter（新增 CFF 专用）
-├── _face.py           # FontFace（字体面度量）
-├── _encoding.py       # FontEncoding（UTF-8 编码适配器）
-├── _font.py           # OpenTypeFont（主用户类）
-└── _shaping.py        # ShapedFragWord、ShapedStr（文本整形支持）
-```
-
-**文件拆分原则**：
-- **独立性**：每个模块可独立理解，CFF 代码与 TrueType 代码完全隔离
-- **可测试性**：每个模块可单独测试，减少全量回归风险
-- **可维护性**：文件体积适中（300-600 行），便于导航
-
-**各类归属**：
-
-| 类名 | 新模块文件 | 说明 |
-|------|----------|------|
-| `FontParser` | `_sfnt.py` | sfnt 二进制格式解析器，继承自 `TTFontParser` |
-| `FontFile` | `_ttf.py` | 字体文件解析 + 子集生成，继承自 `TTFontFile` |
-| `FontMaker` | `_ttf.py` | PDF 子集流生成器，继承自 `TTFontMaker` |
-| `FontFace` | `_face.py` | 字体面（度量 + 子集对象），继承自 `TTFontFace` |
-| `FontEncoding` | `_encoding.py` | UTF-8 编码适配器，继承自 `TTEncoding` |
-| `OpenTypeFont` | `_font.py` | 主用户类，支持 TTF + OTF，继承自 `TTFont` |
-| `CFFParser` | `_cff.py` | CFF 表解析器（新增） |
-| `CFFSubsetter` | `_cff.py` | CFF 子集生成器（新增） |
-| `TTFError` | `_common.py` | 异常类 |
-| `SUBSETN`, `makeToUnicodeCMap`, `splice` | `_common.py` | 辅助函数 |
-
-**`__init__.py` 导出内容**：
-
-```python
-# openfonts/__init__.py
-"""OpenType font support (TTF + OTF/CFF).
-
-This module provides the canonical font classes for OpenType fonts.
-For backward compatibility, the old ttfonts module still works but is deprecated.
-
-Example::
-    from reportlab.pdfbase.openfonts import OpenTypeFont
-    font = OpenTypeFont('MyFont', 'MyFont.otf')
-    pdfmetrics.registerFont(font)
-"""
-
-from ._common import TTFError, SUBSETN, makeToUnicodeCMap, splice, _set_ushort
-from ._sfnt import FontParser
-from ._ttf import FontFile, FontMaker
-from ._cff import CFFParser, CFFSubsetter
-from ._face import FontFace
-from ._encoding import FontEncoding
-from ._font import OpenTypeFont
-
-# 向后兼容别名（deprecated）
-TTFont = OpenTypeFont
-TTFontParser = FontParser
-TTFontFile = FontFile
-TTFontFace = FontFace
-TTFontMaker = FontMaker
-TTEncoding = FontEncoding
-
-__all__ = [
-    'OpenTypeFont', 'FontParser', 'FontFile', 'FontFace',
-    'FontMaker', 'FontEncoding', 'CFFParser', 'CFFSubsetter',
-    # 别名
-    'TTFont', 'TTFontParser', 'TTFontFile', 'TTFontFace',
-    'TTFontMaker', 'TTEncoding',
-]
-```
-
-**`ttfonts.py` 变为**（仅作兼容转发）：
-
-```python
-"""Deprecated compatibility module.
-
-.. deprecated::a
-    所有字体逻辑已迁移至 :mod:`reportlab.pdfbase.openfonts`。
-    请使用::
-
-        from reportlab.pdfbase.openfonts import OpenTypeFont
-
-    本模块将在未来版本中移除。
-"""
-import warnings
-warnings.warn(
-    "ttfonts is deprecated; use openfonts instead",
-    DeprecationWarning,
-    stacklevel=2,
-)
-
-from reportlab.pdfbase.openfonts import (
-    OpenTypeFont,
-    FontParser,
-    FontFile,
-    FontFace,
-    FontMaker,
-    FontEncoding,
-    CFFParser,
-    CFFSubsetter,
-)
-
-TTFont = OpenTypeFont
-TTFontParser = FontParser
-TTFontFile = FontFile
-TTFontFace = FontFace
-TTFontMaker = FontMaker
-TTEncoding = FontEncoding
-```
-
----
-
 ## 1. 概述
 
 ### 1.1 背景
@@ -172,37 +38,49 @@ OTF 字体（OpenType with CFF outlines）是当前最常用的字体格式之�
 
 ---
 
-## 2. 类名重构 + 模块迁移
+## 2. 架构设计
 
-### 2.1 重构背景
+### 2.1 双包架构
 
-随着 OTF 字体支持的加入，原有的 "TT"（TrueType）前缀命名不再准确。
-内部类和用户面向类都需要重命名为能反映实际功能的通用名称。
+本方案采用双包架构，将字体核心逻辑与向后兼容分离：
 
-同时，为清晰区分新逻辑与遗留兼容代码，采用双包架构：
-`openfonts/` 包承载所有新逻辑，`ttfonts.py` 仅作兼容转发。
+| 文件/包 | 角色 | 说明 |
+|--------|------|------|
+| `src/reportlab/pdfbase/openfonts/` | **主包（新）** | 包含所有字体逻辑的全新包，命名反映 OpenType 标准 |
+| `src/reportlab/pdfbase/ttfonts.py` | **兼容层（已过期）** | 仅保留向后兼容别名，导入自 `openfonts`，标注 `@deprecated` |
 
-### 2.2 新模块定位
+**设计原则**：
+- `openfonts/` 包是未来所有开发的起点，新类名、新功能全部在此
+- `ttfonts.py` 完全不承载新逻辑，仅做兼容转发，避免代码重复
+- 两模块共存期间，`import` 路径对用户透明（`from reportlab.pdfbase import ttfonts` 继续工作）
 
-| 包/文件 | 定位 | 包含类 | 改动策略 |
-|---------|------|--------|---------|
-| `openfonts/` | 主包，未来所有开发在此 | `CFFParser`, `CFFSubsetter`, `FontParser`, `FontFile`, `FontFace`, `FontMaker`, `FontEncoding`, `OpenTypeFont` | 新建包（含多个子模块） |
-| `ttfonts.py` | 兼容层（已过期） | 无 | 仅导入重导出，不含新逻辑 |
+### 2.2 CFF 与 TrueType 差异
 
-### 2.3 重命名方案
+| 方面 | TrueType (.ttf) | OpenType CFF (.otf) |
+|------|----------------|---------------------|
+| sfnt 版本 | `0x00010000` 或 `0x74727565` | `0x4F54544F` ("OTTO") |
+| 轮廓格式 | TrueType 二次 B 样条 | CFF 三次贝塞尔 |
+| 字形数据表 | `glyf` + `loca` | `CFF `（CharStrings INDEX） |
+| maxp 格式 | 32 字节，版本 1.0 | 6 字节，版本 0.5 |
+| 子集化 | 复制 glyf 条目，重建 loca | 重建 CharStrings INDEX、SUBR、FDSelect |
+| PDF 嵌入 | FontFile2 / TrueType | FontFile3 / Type1C |
+| PDF 字体子类型 | `TrueType` | `Type1C` |
+| 共享表 | name, head, OS/2, post, hhea, hmtx, cmap | 同左（完全一致） |
 
-#### 用户面向类（影响最大）
+### 2.3 类名重构
+
+#### 用户面向类
 
 | 旧名称 | 新名称 | 向后兼容别名 | 说明 |
 |--------|--------|-------------|------|
 | `TTFont` | `OpenTypeFont` | `TTFont = OpenTypeFont` | 主用户类，支持 TTF + OTF |
 
-**`OpenTypeFont`** 名称选择理由：
+**`OpenTypeFont` 名称选择理由**：
 - OpenType 是 TTF 和 OTF 的统一标准（ISO 14496-22）
 - 明确表示字体格式为 OpenType（而非仅 TrueType）
 - 与 `pdfmetrics.Font`（Type1 字体）形成清晰的命名体系
 
-#### 内部类（仅影响内部代码和测试）
+#### 内部类
 
 | 旧名称 | 新名称 | 说明 |
 |--------|--------|------|
@@ -214,7 +92,7 @@ OTF 字体（OpenType with CFF outlines）是当前最常用的字体格式之�
 
 ### 2.4 向后兼容策略
 
-`ttfonts.py` 完全由兼容别名组成，不含任何类实现（详见 §0.2 示例代码）。
+`ttfonts.py` 完全由兼容别名组成，不含任何类实现。
 
 **效果**：
 - 现有用户代码 `from reportlab.pdfbase.ttfonts import TTFont` 继续工作（带 DeprecationWarning）
@@ -222,7 +100,61 @@ OTF 字体（OpenType with CFF outlines）是当前最常用的字体格式之�
 - 新代码推荐 `from reportlab.pdfbase.openfonts import OpenTypeFont`
 - 内部代码直接使用 `openfonts` 中的新名称
 
-### 2.5 影响范围分析
+---
+
+## 3. 模块设计
+
+### 3.1 新模块文件结构
+
+```
+src/reportlab/pdfbase/openfonts/
+├── __init__.py       # 包入口，导出主类 + 向后兼容别名
+├── _common.py         # 公共定义：错误类、SUBSETN、辅助函数
+├── _sfnt.py           # FontParser 基类（sfnt 二进制解析）
+├── _ttf.py            # FontFile、FontMaker（TrueType 专用）
+├── _cff.py            # CFFParser、CFFSubsetter（新增 CFF 专用）
+├── _face.py           # FontFace（字体面度量）
+├── _encoding.py       # FontEncoding（UTF-8 编码适配器）
+├── _font.py           # OpenTypeFont（主用户类）
+└── _shaping.py        # ShapedFragWord、ShapedStr（文本整形支持）
+```
+
+**文件拆分原则**：
+- **独立性**：每个模块可独立理解，CFF 代码与 TrueType 代码完全隔离
+- **可测试性**：每个模块可单独测试，减少全量回归风险
+- **可维护性**：文件体积适中（300-600 行），便于导航
+
+### 3.2 各类归属
+
+| 类名 | 模块文件 | 说明 |
+|------|----------|------|
+| `FontParser` | `_sfnt.py` | sfnt 二进制格式解析器 |
+| `FontFile` | `_ttf.py` | 字体文件解析 + 子集生成 |
+| `FontMaker` | `_ttf.py` | PDF 子集流生成器 |
+| `FontFace` | `_face.py` | 字体面（度量 + 子集对象） |
+| `FontEncoding` | `_encoding.py` | UTF-8 编码适配器 |
+| `OpenTypeFont` | `_font.py` | 主用户类，支持 TTF + OTF |
+| `CFFParser` | `_cff.py` | CFF 表解析器（新增） |
+| `CFFSubsetter` | `_cff.py` | CFF 子集生成器（新增） |
+| `TTFError` | `_common.py` | 异常类 |
+| `SUBSETN`, `makeToUnicodeCMap`, `splice` | `_common.py` | 辅助函数 |
+
+### 3.3 文件大小估算
+
+| 文件 | 行数（估） | 说明 |
+|------|----------|------|
+| `_common.py` | ~80 | 错误类 + 辅助函数 |
+| `_sfnt.py` | ~200 | FontParser 基类 |
+| `_ttf.py` | ~700 | FontFile + FontMaker（TrueType 部分） |
+| `_cff.py` | ~500 | CFFParser + CFFSubsetter |
+| `_face.py` | ~100 | FontFace |
+| `_encoding.py` | ~20 | FontEncoding |
+| `_font.py` | ~300 | OpenTypeFont |
+| `_shaping.py` | ~50 | 文本整形 |
+| `__init__.py` | ~50 | 导出 + 别名 |
+| **总计** | **~2000** | 与原 `ttfonts.py` 约 1585 行相当 |
+
+### 3.4 受影响文件清单
 
 #### 新增文件
 
@@ -239,12 +171,13 @@ OTF 字体（OpenType with CFF outlines）是当前最常用的字体格式之�
 | `src/reportlab/pdfbase/openfonts/_shaping.py` | ShapedFragWord、ShapedStr（文本整形） |
 | `tests/test_pdfbase_otf.py` | OTF 字体测试 |
 
-#### 源文件修改（ttfonts.py 改为兼容层）
+#### 修改文件
 
-| 文件 | 涉及的类 | 说明 |
-|------|---------|------|
-| `src/reportlab/pdfbase/ttfonts.py` | 全部旧类 | 改为纯兼容层，从 openfonts 导入重导出 |
-| `tests/test_pdfbase_ttfonts.py` | `TTFont`, `TTFontFace`, `TTFontFile`, `TTFontParser`, `TTFontMaker` | 测试继续通过（别名生效） |
+| 文件 | 修改内容 |
+|------|---------|
+| `src/reportlab/pdfbase/ttfonts.py` | 改为纯兼容层，从 openfonts 导入重导出 |
+| `src/reportlab/pdfbase/pdfdoc.py` | 新增 `PDFType1CFont` 类 |
+| `tests/test_pdfbase_ttfonts.py` | 测试继续通过（别名生效） |
 
 #### 引用更新（ttfonts → openfonts，渐进式）
 
@@ -276,88 +209,9 @@ OTF 字体（OpenType with CFF outlines）是当前最常用的字体格式之�
 - `src/reportlab/graphics/utils.py` — 导入 `ShapedStr`
 - `src/reportlab/rl_settings.py` — 无类引用
 
-### 2.6 迁移顺序
-
-1. **创建 `openfonts/` 包目录**
-2. **创建 `_common.py`**：迁移 `TTFError`、`SUBSETN`、辅助函数、常量
-3. **创建 `_sfnt.py`**：迁移 `FontParser`（继承 `TTFontParser`），修改 `readHeader()` 接受 OTTO
-4. **创建 `_ttf.py`**：迁移 `FontFile`、`FontMaker`（TrueType 专用），修改 `extractInfo()` 的 maxp/loca 分支
-5. **创建 `_cff.py`**：新增 `CFFParser`、`CFFSubsetter` 类
-6. **创建 `_face.py`**：迁移 `FontFace`，修改 `addSubsetObjects()` 支持 CFF
-7. **创建 `_encoding.py`**：迁移 `FontEncoding`
-8. **创建 `_font.py`**：迁移 `OpenTypeFont`，修改 `addObjects()` 支持 CFF
-9. **创建 `_shaping.py`**：迁移 `ShapedFragWord`、`ShapedStr`
-10. **创建 `__init__.py`**：包入口，导出主类 + 向后兼容别名
-11. **改造 `ttfonts.py`** 为纯兼容层（导入重导出 + DeprecationWarning）
-12. **新增 `pdfdoc.PDFType1CFont`** 类
-13. **更新内部引用** 为 `openfonts`（`pdfmetrics.py` 等核心文件）
-14. **渐进式更新** 测试文件和文档中的引用（别名保证兼容）
-
-别名机制确保任何未更新的代码继续正常运行，DeprecationWarning 引导用户迁移。
-
-### 2.7 文件大小估算
-
-| 文件 | 行数（估） | 说明 |
-|------|----------|------|
-| `_common.py` | ~80 | 错误类 + 辅助函数 |
-| `_sfnt.py` | ~200 | FontParser 基类 |
-| `_ttf.py` | ~700 | FontFile + FontMaker（TrueType 部分） |
-| `_cff.py` | ~500 | CFFParser + CFFSubsetter |
-| `_face.py` | ~100 | FontFace |
-| `_encoding.py` | ~20 | FontEncoding |
-| `_font.py` | ~300 | OpenTypeFont |
-| `_shaping.py` | ~50 | 文本整形 |
-| `__init__.py` | ~50 | 导出 + 别名 |
-| **总计** | **~2000** | 与原 `ttfonts.py` 约 1585 行相当 |
-
 ---
 
-## 3. 架构分析
-
-### 3.1 CFF 字体与 TrueType 字体的差异
-
-| 方面 | TrueType (.ttf) | OpenType CFF (.otf) |
-|------|----------------|---------------------|
-| sfnt 版本 | `0x00010000` 或 `0x74727565` | `0x4F54544F` ("OTTO") |
-| 轮廓格式 | TrueType 二次 B 样条 | CFF 三次贝塞尔 |
-| 字形数据表 | `glyf` + `loca` | `CFF `（CharStrings INDEX） |
-| maxp 格式 | 32 字节，版本 1.0 | 6 字节，版本 0.5 |
-| 子集化 | 复制 glyf 条目，重建 loca | 重建 CharStrings INDEX、SUBR、FDSelect |
-| PDF 嵌入 | FontFile2 / TrueType | FontFile3 / Type1C |
-| PDF 字体子类型 | `TrueType` | `Type1C` |
-| 共享表 | name, head, OS/2, post, hhea, hmtx, cmap | 同左（完全一致） |
-
-### 3.2 受影响的代码路径
-
-| 位置 | 当前行为（TrueType） | 需要的变更（CFF） |
-|------|---------------------|-------------------|
-| `FontParser.readHeader()` | 拒绝 OTTO 版本 | 接受 OTTO，设置 `self.isCFF = True` |
-| `FontFile.extractInfo()` maxp | 读取 32 字节 maxp，检查版本 1.0 | 分支处理：CFF maxp 仅 6 字节，版本 0.5 |
-| `FontFile.extractInfo()` loca | 读取 loca 表 | CFF 无 loca 表，跳过；存储 CFF 偏移信息 |
-| `FontFile.makeSubset()` | 复制 glyf，重建 loca，生成 TTF sfnt 流 | 生成 CFF 子集流 |
-| `FontFace.addSubsetObjects()` | 使用 FontFile2 | 使用 FontFile3 + Subtype /Type1C |
-| `OpenTypeFont.addObjects()` | 创建 PDFTrueTypeFont | 创建 PDFType1CFont |
-| `FontMaker.makeStream()` | 生成 TTF sfnt 流 | CFF 字体输出 CFF 表数据（不需要 sfnt 包装） |
-
-### 3.3 可复用的代码
-
-以下代码对 TTF 和 OTF 字体完全通用，无需修改：
-
-- `FontParser` 的所有二进制读取方法（`read_ushort`、`read_tag` 等）
-- `cmap` 表解析
-- `hmtx` 表解析
-- `name` 表解析
-- `head` 表解析
-- `OS/2` 表解析
-- `post` 表解析
-- `hhea` 表解析
-- `OpenTypeFont.State` 子集管理
-- `OpenTypeFont.splitString()` Unicode 到子集的拆分
-- `makeToUnicodeCMap()` PDF ToUnicode CMap 生成
-
----
-
-## 4. 公开 API 设计
+## 4. 公开 API
 
 ### 4.1 API 兼容性
 
@@ -402,9 +256,9 @@ c.save()
 
 ---
 
-## 5. 详细设计
+## 5. 实现细节
 
-### 5.1 整体架构
+### 5.1 整体数据流
 
 ```
 OTF 文件 (.otf)
@@ -427,24 +281,35 @@ OTF 文件 (.otf)
         └── PDFType1CFont + FontFile3 (Type1C)
 ```
 
-### 5.2 受影响模块清单
+### 5.2 受影响的代码路径
 
-| 文件 | 修改类型 | 修改内容摘要 |
-|------|---------|-------------|
-| `src/reportlab/pdfbase/openfonts/__init__.py` | **新增（包入口）** | 导出主类 + 向后兼容别名 |
-| `src/reportlab/pdfbase/openfonts/_common.py` | **新增（拆分）** | 迁移 `TTFError`、`SUBSETN`、辅助函数 |
-| `src/reportlab/pdfbase/openfonts/_sfnt.py` | **新增（拆分）** | `FontParser` 基类（sfnt 解析），`readHeader()` 接受 OTTO |
-| `src/reportlab/pdfbase/openfonts/_ttf.py` | **新增（拆分）** | `FontFile`、`FontMaker`（TrueType 专用） |
-| `src/reportlab/pdfbase/openfonts/_cff.py` | **新增（新增）** | `CFFParser`、`CFFSubsetter` 类 |
-| `src/reportlab/pdfbase/openfonts/_face.py` | **新增（拆分）** | `FontFace` 类 |
-| `src/reportlab/pdfbase/openfonts/_encoding.py` | **新增（拆分）** | `FontEncoding` 类 |
-| `src/reportlab/pdfbase/openfonts/_font.py` | **新增（拆分）** | `OpenTypeFont` 主类 |
-| `src/reportlab/pdfbase/openfonts/_shaping.py` | **新增（拆分）** | `ShapedFragWord`、`ShapedStr` |
-| `src/reportlab/pdfbase/ttfonts.py` | **改造为兼容层** | 删除所有实现，仅保留兼容导入 + DeprecationWarning + 别名重导出 |
-| `src/reportlab/pdfbase/pdfdoc.py` | **修改** | 新增 `PDFType1CFont` 类 |
-| `tests/test_pdfbase_otf.py` | 新增 | OTF 字体测试用例 |
+| 位置 | 当前行为（TrueType） | 需要的变更（CFF） |
+|------|---------------------|-------------------|
+| `FontParser.readHeader()` | 拒绝 OTTO 版本 | 接受 OTTO，设置 `self.isCFF = True` |
+| `FontFile.extractInfo()` maxp | 读取 32 字节 maxp，检查版本 1.0 | 分支处理：CFF maxp 仅 6 字节，版本 0.5 |
+| `FontFile.extractInfo()` loca | 读取 loca 表 | CFF 无 loca 表，跳过；存储 CFF 偏移信息 |
+| `FontFile.makeSubset()` | 复制 glyf，重建 loca，生成 TTF sfnt 流 | 生成 CFF 子集流 |
+| `FontFace.addSubsetObjects()` | 使用 FontFile2 | 使用 FontFile3 + Subtype /Type1C |
+| `OpenTypeFont.addObjects()` | 创建 PDFTrueTypeFont | 创建 PDFType1CFont |
+| `FontMaker.makeStream()` | 生成 TTF sfnt 流 | CFF 字体输出 CFF 表数据（不需要 sfnt 包装） |
 
-### 5.3 各模块结构设计
+### 5.3 可复用的代码
+
+以下代码对 TTF 和 OTF 字体完全通用，无需修改：
+
+- `FontParser` 的所有二进制读取方法（`read_ushort`、`read_tag` 等）
+- `cmap` 表解析
+- `hmtx` 表解析
+- `name` 表解析
+- `head` 表解析
+- `OS/2` 表解析
+- `post` 表解析
+- `hhea` 表解析
+- `OpenTypeFont.State` 子集管理
+- `OpenTypeFont.splitString()` Unicode 到子集的拆分
+- `makeToUnicodeCMap()` PDF ToUnicode CMap 生成
+
+### 5.4 各模块结构设计
 
 #### `_common.py` — 公共定义
 
@@ -537,9 +402,89 @@ class PDFType1CFont(PDFType1Font):
     Subtype = "Type1C"
 ```
 
+### 5.5 包导出设计
+
+#### `openfonts/__init__.py`
+
+```python
+"""OpenType font support (TTF + OTF/CFF).
+
+This module provides the canonical font classes for OpenType fonts.
+For backward compatibility, the old ttfonts module still works but is deprecated.
+
+Example::
+    from reportlab.pdfbase.openfonts import OpenTypeFont
+    font = OpenTypeFont('MyFont', 'MyFont.otf')
+    pdfmetrics.registerFont(font)
+"""
+
+from ._common import TTFError, SUBSETN, makeToUnicodeCMap, splice, _set_ushort
+from ._sfnt import FontParser
+from ._ttf import FontFile, FontMaker
+from ._cff import CFFParser, CFFSubsetter
+from ._face import FontFace
+from ._encoding import FontEncoding
+from ._font import OpenTypeFont
+
+# 向后兼容别名（deprecated）
+TTFont = OpenTypeFont
+TTFontParser = FontParser
+TTFontFile = FontFile
+TTFontFace = FontFace
+TTFontMaker = FontMaker
+TTEncoding = FontEncoding
+
+__all__ = [
+    'OpenTypeFont', 'FontParser', 'FontFile', 'FontFace',
+    'FontMaker', 'FontEncoding', 'CFFParser', 'CFFSubsetter',
+    # 别名
+    'TTFont', 'TTFontParser', 'TTFontFile', 'TTFontFace',
+    'TTFontMaker', 'TTEncoding',
+]
+```
+
+#### `ttfonts.py`（兼容层）
+
+```python
+"""Deprecated compatibility module.
+
+.. deprecated::
+    所有字体逻辑已迁移至 :mod:`reportlab.pdfbase.openfonts`。
+    请使用::
+
+        from reportlab.pdfbase.openfonts import OpenTypeFont
+
+    本模块将在未来版本中移除。
+"""
+import warnings
+warnings.warn(
+    "ttfonts is deprecated; use openfonts instead",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
+from reportlab.pdfbase.openfonts import (
+    OpenTypeFont,
+    FontParser,
+    FontFile,
+    FontFace,
+    FontMaker,
+    FontEncoding,
+    CFFParser,
+    CFFSubsetter,
+)
+
+TTFont = OpenTypeFont
+TTFontParser = FontParser
+TTFontFile = FontFile
+TTFontFace = FontFace
+TTFontMaker = FontMaker
+TTEncoding = FontEncoding
+```
+
 ---
 
-## 6. PDF 语义正确性分析
+## 6. PDF 语义正确性
 
 ### 6.1 PDF Type1C 字体嵌入
 
@@ -571,7 +516,9 @@ CFF 字体的 ToUnicode CMap 生成与 TrueType 完全相同——它是 PDF 层
 
 ---
 
-## 7. 边界情况与约束
+## 7. 约束与性能
+
+### 7.1 边界情况
 
 | 场景 | 行为 |
 |------|------|
@@ -586,32 +533,30 @@ CFF 字体的 ToUnicode CMap 生成与 TrueType 完全相同——它是 PDF 层
 | 空字体（0 字形） | 拒绝 |
 | CFF subroutinization | 子集化时保留被引用的 subroutines |
 
----
+### 7.2 性能分析
 
-## 8. 性能分析
-
-### 8.1 解析开销
+#### 解析开销
 
 CFF 表通常比 TrueType 的 glyf+loca 表大（因为包含完整的 CharStrings + hints）。
 例如 `SourceHanSansK-Light.otf` 的 CFF 表为 15.5MB。
 
 初始版本采用全量解析策略（读取整个 CFF 表到内存），后续可优化为惰性解析。
 
-### 8.2 子集化开销
+#### 子集化开销
 
 CFF 子集化比 TrueType 更复杂（需要重建 CharStrings INDEX、SUBR 等），
 但对于典型文档（几十到几百个字符），开销是可接受的。
 
-### 8.3 PDF 文件大小
+#### PDF 文件大小
 
 CFF 字体嵌入通常比 TrueType 更小（CFF 压缩效率更高），
 但初始版本不实现 CFF 子集压缩（直接嵌入子集化的 CFF 数据）。
 
 ---
 
-## 9. 测试计划
+## 8. 测试计划
 
-### 9.1 测试文件结构
+### 8.1 测试文件结构
 
 ```
 tests/
@@ -632,57 +577,18 @@ tests/
 - 字体缺失时，相关测试自动跳过（SKIP），不影响其他测试
 - 测试使用 `makeSuite()` 模式，遵循 `tests/runAll.py` 发现机制
 
-### 9.2 测试用例
+### 8.2 测试用例概要
 
-#### `test_otf_loading.py`
+| 文件 | 测试数 | 主要内容 |
+|------|--------|---------|
+| `test_otf_loading.py` | 4 | 加载验证、度量、宽度、cmap |
+| `test_otf_metrics.py` | 2 | 字形数量、PostScript 名称 |
+| `test_otf_subsetting.py` | 3 | glyph 映射、CharStrings、子集大小 |
+| `test_otf_rendering.py` | 3 | PDF 生成、FontFile3、Type1C 子类型 |
+| `test_otf_asian.py` | 2 | CJK 渲染、Unicode 范围 |
+| `test_otf_fallback.py` | 4 | OTF fallback、宽度计算、混合字体 |
 
-| 测试 | 描述 |
-|------|------|
-| `test_otf_load_is_cff` | 加载 OTF 验证 `isCFF = True` |
-| `test_otf_metrics` | 验证 ascent、descent、capHeight、bbox |
-| `test_otf_char_widths` | 验证字符宽度字典正确 |
-| `test_otf_char_to_glyph` | 验证 cmap 映射正确（CJK） |
-
-#### `test_otf_metrics.py`
-
-| 测试 | 描述 |
-|------|------|
-| `test_otf_num_glyphs` | 验证字形数量从 maxp 读取 |
-| `test_otf_postscript_name` | 验证 PostScript 名称正确提取 |
-
-#### `test_otf_subsetting.py`
-
-| 测试 | 描述 |
-|------|------|
-| `test_subset_glyph_map` | 验证子集 glyph 映射正确 |
-| `test_subset_charstrings` | 验证子集 CharStrings 包含所需字形 |
-| `test_subset_size_reasonable` | 验证子集大小合理 |
-
-#### `test_otf_rendering.py` → `pdf-out/test_otf_rendering.pdf`
-
-| 测试 | 描述 |
-|------|------|
-| `test_otf_pdf_basic` | 简单 PDF（中英文混排） |
-| `test_otf_pdf_fontfile3` | PDF 中存在 FontFile3 |
-| `test_otf_pdf_type1c` | PDF 字体子类型为 Type1C |
-
-#### `test_otf_asian.py` → `pdf-out/test_otf_asian.pdf`
-
-| 测试 | 描述 |
-|------|------|
-| `test_cjk_rendering` | 纯 CJK 文本渲染 |
-| `test_unicode_range` | Unicode 范围字符渲染 |
-
-#### `test_otf_fallback.py` → `pdf-out/test_otf_fallback.pdf`
-
-| 测试 | 描述 |
-|------|------|
-| `test_fallback_otf_cjk` | OTF 字体 CJK 字符 fallback |
-| `test_fallback_width_calc` | fallback 宽度计算正确 |
-| `test_mixed_otf_primary` | OTF 为主，TTF 作 fallback |
-| `test_mixed_ttf_primary` | TTF 为主，OTF 作 fallback |
-
-### 9.3 回归测试
+### 8.3 回归测试
 
 在现有测试文件末尾追加（不新建文件）：
 
@@ -701,7 +607,7 @@ def test_otf_alias_works(self):
     assert isinstance(font, OTFont)
 ```
 
-### 9.4 测试数据
+### 8.4 测试数据
 
 字体文件存放在 `tests_resource/` 目录，从 https://reportlab-enhanced.tain.one/test-resource.zip 下载。
 
@@ -711,4 +617,23 @@ def test_otf_alias_works(self):
 | `NotoSansCJKsc-Regular.otf` | CJK fallback 测试 |
 | `DejaVuSans.ttf` | TTF fallback 测试 |
 
+---
 
+## 9. 实施顺序
+
+1. **创建 `openfonts/` 包目录**
+2. **创建 `_common.py`**：迁移 `TTFError`、`SUBSETN`、辅助函数、常量
+3. **创建 `_sfnt.py`**：迁移 `FontParser`，修改 `readHeader()` 接受 OTTO
+4. **创建 `_ttf.py`**：迁移 `FontFile`、`FontMaker`，修改 `extractInfo()` 的 maxp/loca 分支
+5. **创建 `_cff.py`**：新增 `CFFParser`、`CFFSubsetter` 类
+6. **创建 `_face.py`**：迁移 `FontFace`，修改 `addSubsetObjects()` 支持 CFF
+7. **创建 `_encoding.py`**：迁移 `FontEncoding`
+8. **创建 `_font.py`**：迁移 `OpenTypeFont`，修改 `addObjects()` 支持 CFF
+9. **创建 `_shaping.py`**：迁移 `ShapedFragWord`、`ShapedStr`
+10. **创建 `__init__.py`**：包入口，导出主类 + 向后兼容别名
+11. **改造 `ttfonts.py`** 为纯兼容层（导入重导出 + DeprecationWarning）
+12. **新增 `pdfdoc.PDFType1CFont`** 类
+13. **更新内部引用** 为 `openfonts`（`pdfmetrics.py` 等核心文件）
+14. **渐进式更新** 测试文件和文档中的引用（别名保证兼容）
+
+别名机制确保任何未更新的代码继续正常运行，DeprecationWarning 引导用户迁移。
