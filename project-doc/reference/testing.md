@@ -29,6 +29,7 @@ python test_ttfont_fallback_core.py
 | `--failfast` | 遇到失败立即停止 |
 | `--verbosity=2` | 详细输出 |
 | `--exclude=test_a,test_b` | 排除指定测试文件（不含 `.py` 后缀） |
+| `--outdir=<path>` | 指定测试输出目录 |
 | `--clean` | 清理测试输出文件后运行 |
 
 示例：
@@ -68,6 +69,7 @@ python runAll.py --failfast --verbosity=2 --exclude=test_graphics_speed,test_doc
 | `test_otf_rendering.py` | PDF渲染（生成实际PDF文件） |
 | `test_otf_asian.py` | 亚洲CJK文本渲染 |
 | `test_otf_fallback.py` | OTF + TTF 混合回退 |
+| `test_pdfbase_otf.py` | OTF PDF 渲染基础测试 |
 
 ### 3. 传统TTF测试
 
@@ -101,7 +103,9 @@ https://reportlab-enhanced.tain.one/test-resource.zip
 
 ## 测试输出
 
-测试生成的 PDF、SVG 等文件存放在 `tests/` 目录下。运行前可清理：
+测试生成的 PDF 文件存放在 `tests/pdf-out/` 目录下，其他输出文件存放在 `tests/` 目录下。
+
+运行前可清理所有输出：
 
 ```bash
 cd tests

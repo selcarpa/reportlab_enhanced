@@ -1967,8 +1967,10 @@ class PDFTrueTypeFont(PDFType1Font):
     #local_attributes = "FirstChar LastChar Widths Encoding ToUnicode FontDescriptor".split() #same
 
 class PDFType1CFont(PDFType1Font):
-    """PDF font type for OpenType CFF fonts (FontFile3 + /Type1C)."""
-    Subtype = "Type1C"
+    """PDF font type for OpenType CFF fonts (FontFile3 + /Type1C).
+    Font dictionary Subtype must be "Type1" per PDF spec (Type1C
+    is only valid for FontFile3's Subtype, handled in _face.py)."""
+    Subtype = "Type1"
 
 # UGLY ALERT - this needs turning into something O-O, it was hacked
 # across from the pdfmetrics.Encoding class to avoid circularity

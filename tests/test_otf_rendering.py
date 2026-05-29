@@ -37,10 +37,10 @@ class TestOTFRendering(unittest.TestCase):
         font = OpenTypeFont('TestFontFile3', OTF_FONT)
         self.assertTrue(getattr(font.face, 'isCFF', False))
 
-    def test_type1c_subtype(self):
-        """测试 Type1C 子类型"""
+    def test_type1c_font_dict_subtype(self):
+        """Font dictionary Subtype for CFF fonts must be Type1."""
         from reportlab.pdfbase.pdfdoc import PDFType1CFont
-        self.assertEqual(PDFType1CFont.Subtype, 'Type1C')
+        self.assertEqual(PDFType1CFont.Subtype, 'Type1')
 
 
 def makeSuite():

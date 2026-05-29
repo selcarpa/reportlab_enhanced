@@ -125,7 +125,7 @@ def main(pattern='test_*.py'):
             for f,tb in NI:
                 print('file: "%s"\n%s\n' % (f,''.join(tb)))
         printLocation()
-    if __name__=='__main__':
+    if __name__=='__main__' and result is not None:
         sys.exit(not result.wasSuccessful())
 
 def mainEx():

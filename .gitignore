@@ -142,3 +142,6 @@ src/reportlab/graphics/out-svg
 # External test resources (fonts)
 tests_resource/*.ttf
 tests_resource/*.otf
+
+# PDF test output
+tests/pdf-out/
