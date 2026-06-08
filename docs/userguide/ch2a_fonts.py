@@ -376,18 +376,11 @@ the Vera font as above we can use paragraph text like""")
 parabox2("""<font name="Times-Roman" size="14">This is in Times-Roman</font>
 <font name="Vera" color="magenta" size="14">and this is in magenta <b>Vera!</b></font>""","Using TTF fonts in paragraphs")
 
-heading3("TrueType Font Fallback (Experimental)")
+heading3("TrueType Font Fallback")
 disc("""
-This is an experimental feature. When a TrueType font does not contain a glyph
-for a character, ReportLab can automatically fall back to a substitute font.
-This is useful for mixed-script documents (e.g. Latin + CJK).
-""")
-disc("""
-The feature is disabled by default. Set the environment variable
-$REPORTLAB_FONT_FALLBACK=1$ to enable it.
-""")
-eg("""
-REPORTLAB_FONT_FALLBACK=1 python your_script.py
+When a TrueType font does not contain a glyph for a character, ReportLab
+automatically falls back to a substitute font. This is useful for
+mixed-script documents (e.g. Latin + CJK).
 """)
 disc("""
 Configure fallback fonts by setting the $substitutionFonts$ property on a TTFont:

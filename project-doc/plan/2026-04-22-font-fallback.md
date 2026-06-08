@@ -1,5 +1,9 @@
 # ReportLab TrueType Font Fallback 设计方案
 
+> **Note (v0.1.0)**: The `REPORTLAB_FONT_FALLBACK` environment variable has been removed.
+> TTFont fallback is now enabled by default. See the section below for the original
+> design with the environment variable switch.
+
 ## 1. 概述
 
 ### 1.1 背景

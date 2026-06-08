@@ -19,7 +19,7 @@ An enhanced fork of [ReportLab](https://www.reportlab.com/) — the open-source 
 
 This fork builds on ReportLab 4.x with additional features:
 
-- **TTFont Fallback**: Automatic font fallback for missing glyphs in TrueType fonts, controlled via environment variable `REPORTLAB_FONT_FALLBACK=1`
+- **TTFont Fallback**: Automatic font fallback for missing glyphs in TrueType fonts, enabled by default
 - Active development with improvements to font handling and CJK support
 
 See [CHANGES.md](CHANGES.md) (English) or [CHANGES.zh-CN.md](CHANGES.zh-CN.md) (中文) for the full changelog.

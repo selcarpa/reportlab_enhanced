@@ -110,17 +110,9 @@ class MultiScriptWidthTest(unittest.TestCase):
     def setUp(self):
         registerVera()
         registerExternalFonts()
-        self._orig_env = os.environ.get('REPORTLAB_FONT_FALLBACK', None)
-
-    def tearDown(self):
-        if self._orig_env is None:
-            os.environ.pop('REPORTLAB_FONT_FALLBACK', None)
-        else:
-            os.environ['REPORTLAB_FONT_FALLBACK'] = self._orig_env
 
     def test_T18_mixed_width(self):
         """Width of mixed-script text with fallback enabled"""
-        os.environ['REPORTLAB_FONT_FALLBACK'] = '1'
         latin = pdfmetrics.getFont('Vera')
         cjk = pdfmetrics.getFont('NotoSC')
         latin.substitutionFonts = [cjk]
@@ -130,11 +122,9 @@ class MultiScriptWidthTest(unittest.TestCase):
         w_cjk = pdfmetrics.stringWidth("你好", 'NotoSC', 10)
         self.assertAlmostEqual(w, w_latin + w_cjk, places=2)
         latin.substitutionFonts = []
-        os.environ.pop('REPORTLAB_FONT_FALLBACK', None)
 
     def test_T19_width_consistency(self):
         """stringWidth matches sum of per-fragment widths"""
-        os.environ['REPORTLAB_FONT_FALLBACK'] = '1'
         latin = pdfmetrics.getFont('Vera')
         cjk = pdfmetrics.getFont('NotoSC')
         latin.substitutionFonts = [cjk]
@@ -145,11 +135,9 @@ class MultiScriptWidthTest(unittest.TestCase):
         w_b = pdfmetrics.stringWidth("B", 'Vera', 10)
         self.assertAlmostEqual(w_total, w_a + w_cjk + w_b, places=2)
         latin.substitutionFonts = []
-        os.environ.pop('REPORTLAB_FONT_FALLBACK', None)
 
     def test_long_paragraph_width(self):
         """Width of a long mixed-script paragraph with fallback"""
-        os.environ['REPORTLAB_FONT_FALLBACK'] = '1'
         latin = pdfmetrics.getFont('Vera')
         cjk = pdfmetrics.getFont('NotoSC')
         latin.substitutionFonts = [cjk]
@@ -160,11 +148,9 @@ class MultiScriptWidthTest(unittest.TestCase):
         w_sum = sum(pdfmetrics.stringWidth(frag, f.fontName, 10) for f, frag in fragments)
         self.assertAlmostEqual(w, w_sum, places=1)
         latin.substitutionFonts = []
-        os.environ.pop('REPORTLAB_FONT_FALLBACK', None)
 
     def test_three_script_width(self):
         """Width across three scripts"""
-        os.environ['REPORTLAB_FONT_FALLBACK'] = '1'
         latin = pdfmetrics.getFont('Vera')
         cjkSC = pdfmetrics.getFont('NotoSC')
         cjkK = pdfmetrics.getFont('NotoKR')
@@ -173,7 +159,6 @@ class MultiScriptWidthTest(unittest.TestCase):
         w = pdfmetrics.stringWidth(text, 'Vera', 10)
         self.assertGreater(w, 0)
         latin.substitutionFonts = []
-        os.environ.pop('REPORTLAB_FONT_FALLBACK', None)
 
 
 @skipUnlessExternalFonts()

@@ -167,55 +167,24 @@ class EnvVarControlTest(unittest.TestCase):
     def setUp(self):
         registerVera()
         self.font = pdfmetrics.getFont('Vera')
-        self._orig_env = os.environ.get('REPORTLAB_FONT_FALLBACK', None)
 
-    def tearDown(self):
-        if self._orig_env is None:
-            os.environ.pop('REPORTLAB_FONT_FALLBACK', None)
-        else:
-            os.environ['REPORTLAB_FONT_FALLBACK'] = self._orig_env
-
-    def test_T09_disabled_by_default(self):
-        """substitutionFonts returns [] when env var not set"""
-        os.environ.pop('REPORTLAB_FONT_FALLBACK', None)
+    def test_T09_always_enabled(self):
+        """substitutionFonts always returns actual list"""
         fb = TTFont('TestT09', veraPath)
         fb._substitutionFonts = [self.font]
-        self.assertEqual(fb.substitutionFonts, [])
+        self.assertEqual(fb.substitutionFonts, [self.font])
 
-    def test_T10_enabled_by_env(self):
-        """substitutionFonts returns actual list when env var is '1'"""
-        os.environ['REPORTLAB_FONT_FALLBACK'] = '1'
+    def test_T10_setter_stores_value(self):
+        """setter stores value and getter returns it"""
         fb = TTFont('TestT10', veraPath)
         pdfmetrics.registerFont(fb)
         fb.substitutionFonts = [self.font]
-        self.assertEqual(fb.substitutionFonts, [self.font])
-
-    def test_T11_runtime_toggle(self):
-        """Runtime toggle of env var changes behavior"""
-        fb = TTFont('TestT11', veraPath)
-        pdfmetrics.registerFont(fb)
-        fb._substitutionFonts = [self.font]
-
-        os.environ['REPORTLAB_FONT_FALLBACK'] = '1'
-        self.assertEqual(fb.substitutionFonts, [self.font])
-
-        os.environ.pop('REPORTLAB_FONT_FALLBACK', None)
-        self.assertEqual(fb.substitutionFonts, [])
-
-        os.environ['REPORTLAB_FONT_FALLBACK'] = '1'
         self.assertEqual(fb.substitutionFonts, [self.font])
 
 
 class StringWidthTest(unittest.TestCase):
     def setUp(self):
         registerVera()
-        self._orig_env = os.environ.get('REPORTLAB_FONT_FALLBACK', None)
-
-    def tearDown(self):
-        if self._orig_env is None:
-            os.environ.pop('REPORTLAB_FONT_FALLBACK', None)
-        else:
-            os.environ['REPORTLAB_FONT_FALLBACK'] = self._orig_env
 
     def test_T12_no_fallback(self):
         """Width without fallback matches original"""
@@ -224,9 +193,8 @@ class StringWidthTest(unittest.TestCase):
         w2 = pdfmetrics.stringWidth("Hello World", "Vera", 10)
         self.assertAlmostEqual(w1, w2, places=4)
 
-    def test_T13_with_fallback_no_env(self):
-        """Width with fallback set but env var off = same as original"""
-        os.environ.pop('REPORTLAB_FONT_FALLBACK', None)
+    def test_T13_with_fallback(self):
+        """Width with fallback set = same as original"""
         font = pdfmetrics.getFont('Vera')
         w = pdfmetrics.stringWidth("Hello", "Vera", 10)
         font.substitutionFonts = [pdfmetrics.getFont('VeraBd')]
@@ -235,14 +203,12 @@ class StringWidthTest(unittest.TestCase):
 
     def test_T14_with_fallback_enabled(self):
         """Width with fallback enabled for ASCII text"""
-        os.environ['REPORTLAB_FONT_FALLBACK'] = '1'
         font = pdfmetrics.getFont('Vera')
         fontBd = pdfmetrics.getFont('VeraBd')
         font.substitutionFonts = [fontBd]
         w = pdfmetrics.stringWidth("Hello", "Vera", 10)
         self.assertAlmostEqual(w, pdfmetrics.stringWidth("Hello", "Vera", 10), places=4)
         font.substitutionFonts = []
-        os.environ.pop('REPORTLAB_FONT_FALLBACK', None)
 
 
 def makeSuite():

@@ -19,7 +19,7 @@
 
 此 fork 基于 ReportLab 4.x 构建，增加了以下功能：
 
-- **TTFont 字体回退**：TrueType 字体遇到缺失字形时自动回退到备选字体，通过环境变量 `REPORTLAB_FONT_FALLBACK=1` 控制
+- **TTFont 字体回退**：TrueType 字体遇到缺失字形时自动回退到备选字体，默认启用
 - 针对字体处理和 CJK 支持的持续改进
 
 完整变更记录请参阅 [CHANGES.zh-CN.md](CHANGES.zh-CN.md)（中文）或 [CHANGES.md](CHANGES.md)（English）。

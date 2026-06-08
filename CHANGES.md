@@ -37,6 +37,13 @@ All notable changes to this project will be documented in this file.
   the incorrect `Type1C` Subtype may be rejected by strict PDF consumers;
   fix ensures spec compliance with no functional change for tolerant readers
 
+## [0.1.0] - 2026-06-08
+
+### Changed
+- **BREAKING**: TTFont fallback is now enabled by default — the `REPORTLAB_FONT_FALLBACK`
+  environment variable has been removed. `TTFont.substitutionFonts` now always returns
+  the configured fallback list without requiring any environment variable.
+
 ## [0.0.1] - 2026-02-12
 
 ### Added
@@ -48,9 +55,7 @@ All notable changes to this project will be documented in this file.
   - `stringWidth()`: per-fragment width measurement for correct line layout
   - `hasGlyph()`: glyph presence check (string or int codepoint)
   - `registerFontWithFallback()`: convenience API for one-step registration
-  - `REPORTLAB_FONT_FALLBACK=1` environment variable to enable/disable at runtime
-  - Compatibility: disabled by default — zero behaviour change for existing code.
-    All existing `TTFont` APIs fully preserved; fallback is opt-in
+
 - **User documentation i18n** — MkDocs-based HTML documentation with Chinese and
   English language switching for user guides
 - **CI/CD automation** — GitHub Actions workflow for tests, GitHub Pages deployment,
