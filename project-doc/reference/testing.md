@@ -91,14 +91,6 @@ https://reportlab-enhanced.tain.one/test-resource.zip
 
 如果缺失字体，相关测试会自动 skip，不影响其他测试。
 
-## 环境变量
-
-| 变量 | 值 | 说明 |
-|------|------|------|
-| `REPORTLAB_FONT_FALLBACK` | `1` | 启用 TTFont 回退功能 |
-
-部分测试会自行设置和恢复此变量，无需手动设置。
-
 ## 测试输出
 
 测试生成的 PDF、SVG 等文件存放在 `tests/` 目录下。运行前可清理：

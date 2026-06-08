@@ -331,17 +331,10 @@ disc("""如果我们只有 Vera 常规字体，没有粗体或斜体，那么我
 parabox2("""<font name="Times-Roman" size="14">This is in Times-Roman</font>
 <font name="Vera" color="magenta" size="14">and this is in magenta <b>Vera!</b></font>""","在段落中使用 TTF 字体")
 
-heading3("TrueType 字体回退（实验性功能）")
+heading3("TrueType 字体回退")
 disc("""
-这是一项实验性功能。当 TrueType 字体不包含某个字符的字形时，
-ReportLab 可以自动回退到替代字体。
+当 TrueType 字体不包含某个字符的字形时，ReportLab 会自动回退到替代字体。
 这对于混合文本文档（如拉丁文 + 中日韩文字）非常有用。
-""")
-disc("""
-该功能默认禁用。设置环境变量 $REPORTLAB_FONT_FALLBACK=1$ 以启用它。
-""")
-eg("""
-REPORTLAB_FONT_FALLBACK=1 python your_script.py
 """)
 disc("""
 通过设置 TTFont 上的 $substitutionFonts$ 属性来配置回退字体：

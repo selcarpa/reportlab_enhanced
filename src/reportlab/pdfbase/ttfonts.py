@@ -1216,8 +1216,6 @@ class TTFont:
 
     @property
     def substitutionFonts(self):
-        if os.environ.get('REPORTLAB_FONT_FALLBACK', '0') != '1':
-            return []
         return self._substitutionFonts
 
     @substitutionFonts.setter
