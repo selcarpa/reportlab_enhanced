@@ -171,7 +171,9 @@ class FontMaker:
         rangeShift = numTables * 16 - searchRange
 
         # Header
-        write(pack(">lHHHH", 0x00010000, numTables, searchRange,
+        # Use OTTO version for CFF (OTF) fonts, 0x00010000 for TrueType
+        sfntVersion = 0x4F54544F if 'CFF ' in tables else 0x00010000
+        write(pack(">lHHHH", sfntVersion, numTables, searchRange,
                                  entrySelector, rangeShift))
 
         # Table directory
@@ -659,9 +661,9 @@ class FontFile(FontParser):
         while pos < rosPos:
             b = td[pos]; pos += 1
             if b == 28:
-                stack.append(struct.unpack('>h', td[pos:pos+2])[0]); pos += 2
+                stack.append(unpack('>h', td[pos:pos+2])[0]); pos += 2
             elif b == 29:
-                stack.append(struct.unpack('>l', td[pos:pos+4])[0]); pos += 4
+                stack.append(unpack('>l', td[pos:pos+4])[0]); pos += 4
             elif b == 30:
                 while pos < len(td):
                     b2 = td[pos]; pos += 1

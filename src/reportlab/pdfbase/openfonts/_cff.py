@@ -459,6 +459,24 @@ class CFFSubsetter:
             elif oldLen == 5:  # was 32-bit (opcode 29)
                 newEnc = bytes([29]) + pack('>l', newValue)
             data[pos:pos + oldLen] = newEnc
+        else:
+            # New encoding is larger than old: use the next larger fixed-size
+            # format.  This handles the common case where a 16-bit offset
+            # (3 bytes) grows to need 32-bit (5 bytes) after subsetting.
+            if oldLen == 1:
+                # Was single-byte (-107..107), promote to 16-bit (opcode 28)
+                newEnc = bytes([28]) + pack('>h', newValue)
+            else:
+                # Was 16-bit or smaller, promote to 32-bit (opcode 29)
+                newEnc = bytes([29]) + pack('>l', newValue)
+            if len(newEnc) <= oldLen:
+                # Should not happen, but guard against infinite recursion
+                data[pos:pos + oldLen] = newEnc
+            else:
+                raise ValueError(
+                    'CFF dict operand at offset %d grew from %d to %d bytes '
+                    '(old=%d new=%d); in-place patching is not possible'
+                    % (pos, oldLen, len(newEnc), oldValue, newValue))
     
     def generate(self):
         """Generate the CFF subset.
@@ -635,7 +653,43 @@ class CFFSubsetter:
         result.extend(newIndexData)
         if tailSrcStart < len(data):
             result.extend(data[tailSrcStart:])
-        
+
+        # Zero out local Subrs for unreferenced FDs (CID fonts).
+        # This does not change any CFF offsets, but makes the zeroed
+        # regions compress extremely well with zlib in the PDF stream.
+        if cff.isCID and oldFdMap and oldFdArrayPos is not None:
+            usedFDs = set(oldFdMap.get(self.glyphMap[n], 0)
+                          for n in range(numGlyphs))
+            _, fdArrayCount, _ = _readIndex(data, oldFdArrayPos)
+            if len(usedFDs) < fdArrayCount:
+                resultDelta = len(result) - len(data)
+                fdArrInResult = oldFdArrayPos + resultDelta
+                fdOff2, _, fdOffs2 = _readIndex(bytes(result), fdArrInResult)
+                for fdIdx in range(len(fdOffs2) - 1):
+                    if fdIdx in usedFDs:
+                        continue
+                    fdStart = fdOff2 + fdOffs2[fdIdx] - 1
+                    fdEnd = fdOff2 + fdOffs2[fdIdx + 1] - 1
+                    fdDict = _readDict(bytes(result), fdStart, fdEnd)
+                    if 18 not in fdDict:
+                        continue
+                    privSize, privOff = fdDict[18]
+                    privInResult = privOff + resultDelta
+                    privDict = _readDict(bytes(result), privInResult,
+                                         privInResult + privSize)
+                    if 19 not in privDict:
+                        continue
+                    subrsOff = privDict[19][0]
+                    subrsInResult = (privOff + subrsOff) + resultDelta
+                    if 0 <= subrsInResult < len(result):
+                        sOff, sCount, sOffs = _readIndex(
+                            bytes(result), subrsInResult)
+                        if sCount > 0 and len(sOffs) >= 2:
+                            subrsEnd = sOff + (sOffs[-1] - sOffs[0])
+                            if subrsEnd <= len(result):
+                                result[subrsInResult:subrsEnd] = \
+                                    b'\x00' * (subrsEnd - subrsInResult)
+
         if cff.isCID:
             newFdSelectData = self._buildFdSelect(oldFdMap, numGlyphs)
             if newCharset:
