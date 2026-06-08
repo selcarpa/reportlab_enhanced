@@ -49,6 +49,7 @@ def run(pagesize=None, verbose=0, outDir=None, lang='en'):
         'ch1_intro',
         'ch2_graphics',
         'ch2a_fonts',
+        'ch2b_fonts',
         'ch3_pdffeatures',
         'ch4_platypus_concepts',
         'ch5_paragraphs',

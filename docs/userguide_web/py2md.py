@@ -4,13 +4,46 @@
 import os
 import re
 import sys
+import yaml
 
 CHAPTER_ORDER = [
-    'ch1_intro', 'ch2_graphics', 'ch2a_fonts', 'ch3_pdffeatures',
+    'ch1_intro', 'ch2_graphics', 'ch2a_fonts', 'ch2b_fonts', 'ch3_pdffeatures',
     'ch4_platypus_concepts', 'ch5_paragraphs', 'ch6_tables', 'ch7_custom',
     'graph_intro', 'graph_concepts', 'graph_charts', 'graph_shapes',
     'graph_widgets', 'app_demos',
 ]
+
+
+def _load_nav_titles():
+    """从 mkdocs.yml 解析导航标题"""
+    nav_titles = {}
+    nav_parents = {}
+    with open('mkdocs.yml', 'r', encoding='utf-8') as f:
+        config = yaml.safe_load(f)
+    for lang_cfg in config.get('plugins', [{}])[0].get('i18n', {}).get('languages', []):
+        locale = lang_cfg.get('locale')
+        nav_list = lang_cfg.get('nav', [])
+        for item in nav_list:
+            if isinstance(item, dict):
+                for title, value in item.items():
+                    if isinstance(value, str) and value.endswith('.md'):
+                        chapter = value[:-3]
+                        if locale not in nav_titles:
+                            nav_titles[locale] = {}
+                        nav_titles[locale][chapter] = title
+                    elif isinstance(value, list):
+                        if locale not in nav_parents:
+                            nav_parents[locale] = {}
+                        for sub in value:
+                            if isinstance(sub, dict):
+                                for sub_title, sub_value in sub.items():
+                                    if isinstance(sub_value, str) and sub_value.endswith('.md'):
+                                        chapter = sub_value[:-3]
+                                        if locale not in nav_titles:
+                                            nav_titles[locale] = {}
+                                        nav_titles[locale][chapter] = sub_title
+                                        nav_parents[locale][chapter] = title
+    return nav_titles, nav_parents
 
 
 class NumberingState:
@@ -84,13 +117,13 @@ class MarkdownWriter:
         self.lines.append('')
 
     def heading1(self, text):
-        n = self.num.next_chapter()
+        self.num.next_chapter()
         self._emit(f'# {convert_markup(text)}')
         self._emit_blank()
 
     def heading2(self, text):
-        s = self.num.next_section()
-        self._emit(f'## {self.num.chapter}.{s} {convert_markup(text)}')
+        self.num.next_section()
+        self._emit(f'## {convert_markup(text)}')
         self._emit_blank()
 
     def heading3(self, text):
@@ -325,7 +358,16 @@ def _extract_title(md_path):
 
 
 def _generate_index(output_dir, lang='en'):
-    lines = ['# ReportLab User Guide', '']
+    """从 mkdocs.yml 的 nav 配置生成 index.md，确保标题与导航一致"""
+    locale = 'zh' if lang == 'zh' else 'en'
+    nav_titles, nav_parents = _load_nav_titles()
+    titles = nav_titles.get(locale, nav_titles.get('en', {}))
+    parents = nav_parents.get(locale, nav_parents.get('en', {}))
+
+    lines = []
+    lines.append('# ReportLab 用户指南' if lang == 'zh' else '# ReportLab User Guide')
+    lines.append('')
+
     for chapter_name in CHAPTER_ORDER:
         md_path = os.path.join(output_dir, f'{chapter_name}.md')
         if os.path.isfile(md_path):

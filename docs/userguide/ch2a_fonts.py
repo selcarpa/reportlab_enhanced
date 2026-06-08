@@ -6,7 +6,15 @@ from reportlab.lib.codecharts import SingleByteEncodingChart
 from reportlab.platypus import Image
 import reportlab
 
-heading1("Fonts and encodings")
+heading1("Fonts and encodings (Deprecated)")
+
+disc("""
+<font color="red"><b>DEPRECATED:</b></font> This chapter covers the legacy font system.
+A new unified font API has been introduced. Please refer to
+<i>Chapter 2b: Unified OpenType font system</i>
+for the modern approach covering TrueType, OpenType/CFF, font fallback,
+and text shaping.
+""")
 
 disc("""
 This chapter covers fonts, encodings and Asian language capabilities.
@@ -291,7 +299,13 @@ illust(lambda canv: cht4.drawOn(canv, 0, 0), "Symbol and its one and only encodi
 
 
 CPage(5)
-heading2("TrueType Font Support")
+heading2("TrueType Font Support (Legacy API)")
+
+disc("""
+<font color="red"><b>DEPRECATED:</b></font> This section describes the legacy TTFont API.
+Please refer to Chapter 2b for the unified OpenTypeFont API.
+""")
+
 disc("""
 Marius Gedminas ($mgedmin@delfi.lt$) with the help of Viktorija Zaksiene ($vika@pov.lt$)
 have contributed support for embedded TrueType fonts.  TrueType fonts work in Unicode/UTF8
