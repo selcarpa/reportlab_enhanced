@@ -13,7 +13,7 @@ on:
         type: boolean
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -112,17 +112,65 @@ jobs:
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
 
-      - name: Download dist artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist/
-
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           generate_release_notes: true
           files: dist/*
+
+  # 构建和部署 GitHub Pages 文档
+  deploy-docs:
+    needs: [check-version, test]
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.dry_run != 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Create venv and install dependencies
+        run: |
+          cd docs/userguide_web
+          uv venv
+          uv sync
+          uv pip install -e ../../
+
+      - name: Generate markdown from Python DSL
+        run: |
+          cd docs/userguide_web
+          uv run python py2md.py
+          uv run python py2md.py --zh-CN
+
+      - name: Build MkDocs site
+        run: |
+          cd docs/userguide_web
+          uv run python build.py
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/userguide_web/site
+
+  # 部署 GitHub Pages
+  deploy-pages:
+    needs: deploy-docs
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.dry_run != 'true' }}
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 
   # 构建 (Dry Run 模式)
   build-dry-run:
