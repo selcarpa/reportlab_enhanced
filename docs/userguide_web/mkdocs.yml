@@ -1,15 +1,20 @@
-site_name: ReportLab User Guide
+site_name: ReportLab_enhanced User Guide
 site_url: https://selcarpa.github.io/reportlab_enhanced/
 docs_dir: docs
 site_dir: site
+use_directory_urls: false
+repo_name: reportlab_enhanced
+repo_url: https://github.com/selcarpa/reportlab_enhanced
 theme:
   name: material
+  custom_dir: docs/overrides
   features:
     - navigation.sections
     - navigation.expand
     - search.suggest
     - search.highlight
     - content.code.copy
+    - header.autohide
   palette:
     - scheme: default
       toggle:
@@ -43,7 +48,8 @@ plugins:
             - Home: index.md
             - 'Chapter 1: Introduction': ch1_intro.md
             - 'Chapter 2: Graphics': ch2_graphics.md
-            - 'Chapter 2a: Fonts': ch2a_fonts.md
+            - 'Chapter 2a: Fonts (Deprecated)': ch2a_fonts.md
+            - 'Chapter 2b: Fonts': ch2b_fonts.md
             - 'Chapter 3: PDF Features': ch3_pdffeatures.md
             - 'Chapter 4: PLATYPUS': ch4_platypus_concepts.md
             - 'Chapter 5: Paragraphs': ch5_paragraphs.md
@@ -62,7 +68,8 @@ plugins:
             - Home: index.md
             - '第1章: 简介': ch1_intro.md
             - '第2章: 图形': ch2_graphics.md
-            - '第2a章: 字体': ch2a_fonts.md
+            - '第2a章: 字体（已弃用）': ch2a_fonts.md
+            - '第2b章: 字体': ch2b_fonts.md
             - '第3章: PDF 功能': ch3_pdffeatures.md
             - '第4章: PLATYPUS': ch4_platypus_concepts.md
             - '第5章: 段落': ch5_paragraphs.md

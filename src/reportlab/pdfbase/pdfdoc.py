@@ -674,7 +674,6 @@ class PDFDictionary(PDFObject):
         try:
             keys = list(dict.keys())
         except:
-            print(ascii(dict))
             raise
         if not isinstance(dict,OrderedDict): keys.sort()
         L = [(format(PDFName(k),document)+b" "+format(dict[k],document)) for k in keys]
@@ -1967,31 +1966,11 @@ class PDFTrueTypeFont(PDFType1Font):
     Subtype = "TrueType"
     #local_attributes = "FirstChar LastChar Widths Encoding ToUnicode FontDescriptor".split() #same
 
-##class PDFMMType1Font(PDFType1Font):
-##    Subtype = "MMType1"
-##
-##class PDFType3Font(PDFType1Font):
-##    Subtype = "Type3"
-##    local_attributes = "FirstChar LastChar Widths CharProcs FontBBox FontMatrix Resources Encoding".split()
-##
-##class PDFType0Font(PDFType1Font):
-##    Subtype = "Type0"
-##    local_attributes = "DescendantFonts Encoding".split(
-##
-##class PDFCIDFontType0(PDFType1Font):
-##    Subtype = "CIDFontType0"
-##    local_attributes = "CIDSystemInfo FontDescriptor DW W DW2 W2 Registry Ordering Supplement".split()
-##
-##class PDFCIDFontType0(PDFType1Font):
-##    Subtype = "CIDFontType2"
-##    local_attributes = "BaseFont CIDToGIDMap CIDSystemInfo FontDescriptor DW W DW2 W2".split()
-##
-##class PDFEncoding(PDFType1Font):
-##    Type = "Encoding"
-##    name_attributes = "Type BaseEncoding".split()
-##    # these attributes are assumed to already be of the right type
-##    local_attributes = ["Differences"]
-##
+class PDFType1CFont(PDFType1Font):
+    """PDF font type for OpenType CFF fonts (FontFile3 + /Type1C).
+    Font dictionary Subtype must be "Type1" per PDF spec (Type1C
+    is only valid for FontFile3's Subtype, handled in _face.py)."""
+    Subtype = "Type1"
 
 # UGLY ALERT - this needs turning into something O-O, it was hacked
 # across from the pdfmetrics.Encoding class to avoid circularity

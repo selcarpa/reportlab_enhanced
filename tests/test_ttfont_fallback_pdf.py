@@ -3,7 +3,7 @@
 __version__='3.3.0'
 """TTFont fallback PDF generation tests.
 Internal-font tests always run; multi-script tests require external fonts."""
-from reportlab.lib.testutils import setOutDir, makeSuiteForClasses, outputfile, printLocation
+from reportlab.lib.testutils import setOutDir, makeSuiteForClasses, printLocation
 if __name__=='__main__':
     setOutDir(__name__)
 import unittest, os
@@ -12,6 +12,9 @@ from reportlab.pdfbase import pdfmetrics
 from _ttfont_fallback_helpers import (
     registerVera, registerExternalFonts, skipUnlessExternalFonts,
 )
+
+PDF_OUT = os.path.join(os.path.dirname(__file__), 'pdf-out')
+os.makedirs(PDF_OUT, exist_ok=True)
 
 # ---------------------------------------------------------------------------
 # Internal fonts only
@@ -25,7 +28,7 @@ class PDFGenerationTest(unittest.TestCase):
         font = pdfmetrics.getFont('Vera')
         fontBd = pdfmetrics.getFont('VeraBd')
         font.substitutionFonts = [fontBd]
-        c = Canvas(outputfile('test_fallback_basic.pdf'))
+        c = Canvas(os.path.join(PDF_OUT, 'T20_basic.pdf'))
         c.setFont('Vera', 12)
         c.drawString(100, 700, 'Hello World with fallback')
         c.save()
@@ -36,7 +39,7 @@ class PDFGenerationTest(unittest.TestCase):
         font = pdfmetrics.getFont('Vera')
         fontBd = pdfmetrics.getFont('VeraBd')
         font.substitutionFonts = [fontBd]
-        c = Canvas(outputfile('test_fallback_long_ascii.pdf'))
+        c = Canvas(os.path.join(PDF_OUT, 'long_ascii.pdf'))
         c.setFont('Vera', 10)
         for i in range(50):
             c.drawString(72, 800 - i * 14, 'Line %d: The quick brown fox jumps over the lazy dog.' % i)
@@ -48,7 +51,7 @@ class PDFGenerationTest(unittest.TestCase):
         font = pdfmetrics.getFont('Vera')
         fontBd = pdfmetrics.getFont('VeraBd')
         font.substitutionFonts = [fontBd]
-        c = Canvas(outputfile('test_fallback_all_main.pdf'))
+        c = Canvas(os.path.join(PDF_OUT, 'T22_all_in_main.pdf'))
         c.setFont('Vera', 12)
         c.drawString(100, 700, 'All ASCII text')
         c.save()
@@ -78,7 +81,7 @@ class PDFMultiScriptTest(unittest.TestCase):
         latin = pdfmetrics.getFont('Vera')
         cjk = pdfmetrics.getFont('NotoSC')
         latin.substitutionFonts = [cjk]
-        c = Canvas(outputfile('test_fallback_mixed_script.pdf'))
+        c = Canvas(os.path.join(PDF_OUT, 'T21_mixed_script.pdf'))
         c.setFont('Vera', 12)
         c.drawString(100, 700, 'Hello 你好 World 世界')
         c.save()
@@ -89,7 +92,7 @@ class PDFMultiScriptTest(unittest.TestCase):
         latin = pdfmetrics.getFont('Vera')
         cjk = pdfmetrics.getFont('NotoSC')
         latin.substitutionFonts = [cjk]
-        c = Canvas(outputfile('test_fallback_all_cjk.pdf'))
+        c = Canvas(os.path.join(PDF_OUT, 'T23_all_in_fallback.pdf'))
         c.setFont('Vera', 12)
         c.drawString(100, 700, '你好世界')
         c.save()
@@ -101,7 +104,7 @@ class PDFMultiScriptTest(unittest.TestCase):
         cjkSC = pdfmetrics.getFont('NotoSC')
         cjkK = pdfmetrics.getFont('NotoKR')
         latin.substitutionFonts = [cjkSC, cjkK]
-        c = Canvas(outputfile('test_fallback_three_script.pdf'))
+        c = Canvas(os.path.join(PDF_OUT, 'T25_three_script.pdf'))
         c.setFont('Vera', 12)
         c.drawString(100, 700, 'Hi你好 가')
         c.save()
@@ -112,7 +115,7 @@ class PDFMultiScriptTest(unittest.TestCase):
         latin = pdfmetrics.getFont('Vera')
         greek = pdfmetrics.getFont('TheanoDidot')
         latin.substitutionFonts = [greek]
-        c = Canvas(outputfile('test_fallback_greek.pdf'))
+        c = Canvas(os.path.join(PDF_OUT, 'T26_greek.pdf'))
         c.setFont('Vera', 12)
         c.drawString(100, 700, 'Greek: Αβγδ')
         c.save()
@@ -127,7 +130,7 @@ class PDFMultiScriptTest(unittest.TestCase):
         gentium = pdfmetrics.getFont('GentiumBI')
         emoji = pdfmetrics.getFont('NotoEmoji')
         latin.substitutionFonts = [cjkSC, cjkK, greek, gentium, emoji]
-        c = Canvas(outputfile('test_fallback_long_mixed.pdf'))
+        c = Canvas(os.path.join(PDF_OUT, 'long_mixed_paragraphs.pdf'))
         c.setFont('Vera', 10)
         lines = [
             "ReportLab TTFont Fallback 测试报告",
@@ -161,7 +164,7 @@ class PDFMultiScriptTest(unittest.TestCase):
         gentium = pdfmetrics.getFont('GentiumBI')
         emoji = pdfmetrics.getFont('NotoEmoji')
         latin.substitutionFonts = [cjkSC, cjkK, greek, gentium, emoji]
-        c = Canvas(outputfile('test_fallback_emoji.pdf'))
+        c = Canvas(os.path.join(PDF_OUT, 'emoji.pdf'))
         c.setFont('Vera', 12)
         lines = [
             "😀😁😂🤣😃😄😅😆😇",
@@ -184,7 +187,7 @@ class PDFMultiScriptTest(unittest.TestCase):
         latin = pdfmetrics.getFont('Vera')
         cjk = pdfmetrics.getFont('NotoSC')
         latin.substitutionFonts = [cjk]
-        c = Canvas(outputfile('test_fallback_alternation.pdf'))
+        c = Canvas(os.path.join(PDF_OUT, 'heavy_alternation.pdf'))
         c.setFont('Vera', 10)
         for i in range(30):
             line = ''

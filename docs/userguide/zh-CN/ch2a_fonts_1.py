@@ -6,7 +6,14 @@ from reportlab.lib.codecharts import SingleByteEncodingChart
 from reportlab.platypus import Image
 import reportlab
 
-heading1("字体与编码")
+heading1("字体与编码（已弃用）")
+
+disc("""
+<font color="red"><b>已弃用：</b></font>本章介绍遗留的字体系统。
+新的统一字体 API 已引入。请参考
+<i>第 2b 章：统一 OpenType 字体系统</i>
+了解涵盖 TrueType、OpenType/CFF、字体回退和文本 shaping 的现代方法。
+""")
 
 disc("""
 本章介绍字体、编码以及亚洲语言支持功能。
@@ -261,7 +268,12 @@ illust(lambda canv: cht4.drawOn(canv, 0, 0), "Symbol 及其唯一编码", cht4.w
 
 
 CPage(5)
-heading2("TrueType 字体支持")
+heading2("TrueType 字体支持（遗留 API）")
+
+disc("""
+<font color="red"><b>已弃用：</b></font>本节介绍旧的 TTFont API。
+请参考第 2b 章了解统一的 OpenTypeFont API。
+""")
 disc("""
 Marius Gedminas（$mgedmin@delfi.lt$）在 Viktorija Zaksiene（$vika@pov.lt$）
 的帮助下贡献了对嵌入式 TrueType 字体的支持。TrueType 字体以 Unicode/UTF8 方式工作，

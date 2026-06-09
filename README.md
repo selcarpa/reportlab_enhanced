@@ -22,7 +22,7 @@ This fork builds on ReportLab 4.x with additional features:
 - **TTFont Fallback**: Automatic font fallback for missing glyphs in TrueType fonts, enabled by default
 - Active development with improvements to font handling and CJK support
 
-See [CHANGES.md](CHANGES.md) for the full changelog.
+See [CHANGES.md](CHANGES.md) (English) or [CHANGES.zh-CN.md](CHANGES.zh-CN.md) (中文) for the full changelog.
 
 ## Installation
 

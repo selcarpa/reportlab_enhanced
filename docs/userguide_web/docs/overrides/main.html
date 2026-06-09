@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        document.querySelectorAll('.md-nav__link').forEach(function(el) {
+            if (el.textContent.includes('(Deprecated)') || el.textContent.includes('（已弃用）')) {
+                el.style.textDecoration = 'line-through';
+                el.style.opacity = '0.6';
+            }
+        });
+    });
+    </script>
+{% endblock %}

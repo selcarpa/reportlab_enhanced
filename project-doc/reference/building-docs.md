@@ -18,12 +18,16 @@
 
 ### 构建命令
 
+必须从 `docs/userguide/` 目录运行，否则英文版 `ch5_paragraphs.py` 和 `ch6_tables.py` 中的相对图片路径无法解析。
+
 ```bash
+cd docs/userguide
+
 # 英文版
-uv run python docs/userguide/genuserguide.py
+python genuserguide.py
 
 # 中文版
-uv run python docs/userguide/genuserguide.py --lang=zh-CN
+python genuserguide.py --lang=zh-CN
 ```
 
 **输出：** `docs/reportlab-userguide.pdf` 或 `docs/reportlab-userguide-zh-CN.pdf`
@@ -138,7 +142,7 @@ make linkcheck # 检查外部链接
 通过 YAML 描述文件 + `yaml2pdf` 工具生成 PDF。
 
 ```bash
-cd docs/reference && uv run python genreference.py
+cd docs/reference && python genreference.py
 ```
 
 ---
@@ -146,7 +150,7 @@ cd docs/reference && uv run python genreference.py
 ## 五、一键构建所有 PDF
 
 ```bash
-uv run python docs/genAll.py
+cd docs && python genAll.py
 ```
 
 ---
@@ -195,4 +199,4 @@ docs/
 
 ## 已知问题
 
-英文版的 `ch5_paragraphs.py` 和 `ch6_tables.py` 中存在硬编码的相对图片路径（`../images/testimg.gif`），从项目根目录运行时无法解析。中文版已修正为 `docs/images/...`。
+英文版的 `ch5_paragraphs.py` 和 `ch6_tables.py` 中存在硬编码的相对图片路径（`../images/testimg.gif`）。构建时必须从 `docs/userguide/` 目录运行，否则图片路径无法解析。中文版已修正为 `docs/images/...`，无此问题。

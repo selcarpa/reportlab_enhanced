@@ -22,7 +22,7 @@
 - **TTFont 字体回退**：TrueType 字体遇到缺失字形时自动回退到备选字体，默认启用
 - 针对字体处理和 CJK 支持的持续改进
 
-完整变更记录请参阅 [CHANGES.md](CHANGES.md)。
+完整变更记录请参阅 [CHANGES.zh-CN.md](CHANGES.zh-CN.md)（中文）或 [CHANGES.md](CHANGES.md)（English）。
 
 ## 安装
 
