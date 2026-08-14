@@ -298,19 +298,12 @@ class CFFSubsetter:
                 ranges.append((first, fd))
                 pos += 3
 
+            # Single-pass iteration through ranges: O(n + m) instead of O(n log m)
+            range_idx = 0
             for gid in range(numGlyphs):
-                lo, hi = 0, len(ranges)
-                while lo < hi:
-                    mid = (lo + hi) // 2
-                    if ranges[mid][0] <= gid:
-                        lo = mid + 1
-                    else:
-                        hi = mid
-                idx = lo - 1
-                if idx < 0:
-                    fdMap[gid] = 0
-                else:
-                    fdMap[gid] = ranges[idx][1]
+                while range_idx < len(ranges) - 1 and ranges[range_idx + 1][0] <= gid:
+                    range_idx += 1
+                fdMap[gid] = ranges[range_idx][1]
         return fdMap
     
     def _buildFdSelect(self, oldFdMap, numGlyphs):
@@ -329,7 +322,7 @@ class CFFSubsetter:
     
     def _buildCharset(self, numGlyphs):
         data = bytearray()
-        data.append(0)  # format 0 (single byte)
+        data.append(0)  # format 0: 1-byte format tag, then 2-byte CIDs
         for i in range(1, numGlyphs):
             data.extend(pack('>H', i))  # CID = glyph index
         return bytes(data)

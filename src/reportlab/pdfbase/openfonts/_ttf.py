@@ -799,11 +799,14 @@ class FontFile(FontParser):
         output.add('cmap', cmap)
 
         if self.isCFF:
-            # CFF fonts: use CFF parser for subsetting
-            from ._cff import CFFParser, CFFSubsetter
-            cff = CFFParser(self)
-            cff.parse()
-            
+            # CFF fonts: reuse cached CFF parser to avoid re-parsing
+            if not hasattr(self, '_cff_parser'):
+                from ._cff import CFFParser
+                self._cff_parser = CFFParser(self)
+                self._cff_parser.parse()
+            cff = self._cff_parser
+
+            from ._cff import CFFSubsetter
             # Build glyph map for CFF subsetter
             cffGlyphMap = [0] * numGlyphs
             for newIdx, origIdx in enumerate(glyphMap):
